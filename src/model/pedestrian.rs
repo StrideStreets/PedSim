@@ -1,4 +1,4 @@
-use crate::model::{calc_utils::normalize_motion_vector, sea::Sea};
+use crate::model::{calc_utils::normalize_motion_vector, state::ModelState};
 use core::fmt;
 use krabmaga::engine::agent::Agent;
 use krabmaga::engine::fields::field_2d::{toroidal_transform, Location2D};
@@ -65,7 +65,7 @@ impl Pedestrian {
 impl Agent for Pedestrian {
     /// Put the code that should happen for each step, for each agent here.
     fn step(&mut self, state: &mut dyn State) {
-        let state = state.as_any().downcast_ref::<Sea>().unwrap();
+        let state = state.as_any().downcast_ref::<ModelState>().unwrap();
         let mut rng = rand::thread_rng();
 
         if let Some(dest) = self.dest {

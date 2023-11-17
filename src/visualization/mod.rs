@@ -1,2 +1,2 @@
-pub mod crab_vis;
-pub mod sea_vis;
+pub mod model_vis;
+pub mod ped_vis;

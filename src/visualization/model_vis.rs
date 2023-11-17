@@ -1,6 +1,6 @@
 use crate::model::pedestrian::Pedestrian;
-use crate::model::sea::Sea;
-use crate::visualization::crab_vis::CrabVis;
+use crate::model::state::ModelState;
+use crate::visualization::ped_vis::PedVis;
 use krabmaga::bevy::ecs as bevy_ecs;
 use krabmaga::bevy::ecs::system::Resource;
 use krabmaga::bevy::prelude::Commands;
@@ -14,16 +14,16 @@ use krabmaga::visualization::simulation_descriptor::SimulationDescriptor;
 use krabmaga::visualization::visualization_state::VisualizationState;
 
 #[derive(Clone, Resource)]
-pub struct SeaVis;
+pub struct ModelVis;
 
 /// Define how the simulation should be bootstrapped. Agents should be created here.
 
-impl VisualizationState<Sea> for SeaVis {
+impl VisualizationState<ModelState> for ModelVis {
     fn on_init(
         &self,
         _commands: &mut Commands,
         _sprite_render_factory: &mut AssetHandleFactoryResource,
-        _state: &mut Sea,
+        _state: &mut ModelState,
         _schedule: &mut Schedule,
         _sim: &mut SimulationDescriptor,
     ) {
@@ -32,9 +32,9 @@ impl VisualizationState<Sea> for SeaVis {
     fn get_agent_render(
         &self,
         agent: &Box<dyn Agent>,
-        _state: &Sea,
+        _state: &ModelState,
     ) -> Option<Box<dyn AgentRender>> {
-        Some(Box::new(CrabVis {
+        Some(Box::new(PedVis {
             id: agent.downcast_ref::<Pedestrian>().unwrap().id,
         }))
     }
@@ -44,7 +44,7 @@ impl VisualizationState<Sea> for SeaVis {
         agent_render: &Box<dyn AgentRender>,
         state: &Box<&dyn State>,
     ) -> Option<Box<dyn Agent>> {
-        let state = state.as_any().downcast_ref::<Sea>().unwrap();
+        let state = state.as_any().downcast_ref::<ModelState>().unwrap();
         match state.field.get(&Pedestrian::new(
             agent_render.get_id(),
             Real2D { x: 0., y: 0. },

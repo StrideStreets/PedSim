@@ -1,5 +1,5 @@
 // Global imports (needed for the simulation to run)
-use crate::model::sea::Sea;
+use crate::model::state::ModelState;
 mod model;
 
 #[cfg(not(any(feature = "visualization", feature = "visualization_wasm")))]
@@ -8,7 +8,7 @@ use krabmaga::*;
 // Visualization specific imports
 #[cfg(any(feature = "visualization", feature = "visualization_wasm"))]
 use {
-    crate::visualization::sea_vis::SeaVis, krabmaga::bevy::prelude::Color,
+    crate::visualization::model_vis::ModelVis, krabmaga::bevy::prelude::Color,
     krabmaga::visualization::visualization::Visualization,
 };
 
@@ -39,11 +39,11 @@ fn main() {
     let num_agents = 500;
     let dim: (f32, f32) = (400., 400.);
 
-    let state = Sea::new(dim, num_agents);
+    let state = ModelState::new(dim, num_agents);
     Visualization::default()
         .with_window_dimensions(800., 800.)
         .with_simulation_dimensions(dim.0, dim.1)
         .with_background_color(Color::BLUE)
         .with_name("Template")
-        .start::<SeaVis, Sea>(SeaVis, state);
+        .start::<ModelVis, ModelState>(ModelVis, state);
 }

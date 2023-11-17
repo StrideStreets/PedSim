@@ -1,4 +1,4 @@
-use crate::model::{pedestrian::Pedestrian, sea::Sea};
+use crate::model::{pedestrian::Pedestrian, state::ModelState};
 use krabmaga::bevy::ecs as bevy_ecs;
 use krabmaga::bevy::prelude::{Component, Quat, Transform, Visibility};
 use krabmaga::{
@@ -8,12 +8,12 @@ use krabmaga::{
 use std::f32::consts::PI;
 
 #[derive(Component)]
-pub struct CrabVis {
+pub struct PedVis {
     pub(crate) id: u32,
 }
 
 /// Define how your agent should be rendered here.
-impl AgentRender for CrabVis {
+impl AgentRender for PedVis {
     /// Specify the assets to use. Swap "bird" with the file name of whatever emoji you want to use.
     /// Be sure to also copy the asset itself in the assets/emojis folder. In future, this limitation will
     /// be removed.
@@ -23,7 +23,7 @@ impl AgentRender for CrabVis {
 
     /// Specify where the agent should be rendered in the window.
     fn location(&self, agent: &Box<dyn Agent>, state: &Box<&dyn State>) -> (f32, f32, f32) {
-        let state = state.as_any().downcast_ref::<Sea>().unwrap();
+        let state = state.as_any().downcast_ref::<ModelState>().unwrap();
         let agent = agent.downcast_ref::<Pedestrian>().unwrap();
         let loc = state.field.get_location(*agent);
         match loc {
