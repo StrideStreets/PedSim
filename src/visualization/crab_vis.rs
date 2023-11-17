@@ -1,4 +1,4 @@
-use crate::model::{crab::Crab, sea::Sea};
+use crate::model::{pedestrian::Pedestrian, sea::Sea};
 use krabmaga::bevy::ecs as bevy_ecs;
 use krabmaga::bevy::prelude::{Component, Quat, Transform, Visibility};
 use krabmaga::{
@@ -24,7 +24,7 @@ impl AgentRender for CrabVis {
     /// Specify where the agent should be rendered in the window.
     fn location(&self, agent: &Box<dyn Agent>, state: &Box<&dyn State>) -> (f32, f32, f32) {
         let state = state.as_any().downcast_ref::<Sea>().unwrap();
-        let agent = agent.downcast_ref::<Crab>().unwrap();
+        let agent = agent.downcast_ref::<Pedestrian>().unwrap();
         let loc = state.field.get_location(*agent);
         match loc {
             Some(loc) => (loc.x, loc.y, 0.),
@@ -39,7 +39,7 @@ impl AgentRender for CrabVis {
 
     /// Define the degrees in radians to rotate the texture by.
     fn rotation(&self, agent: &Box<dyn Agent>, _state: &Box<&dyn State>) -> f32 {
-        let concrete_agent = agent.downcast_ref::<Crab>().unwrap();
+        let concrete_agent = agent.downcast_ref::<Pedestrian>().unwrap();
         let rotation = if concrete_agent.last_d.x == 0. || concrete_agent.last_d.y == 0. {
             0.
         } else {

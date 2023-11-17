@@ -15,8 +15,8 @@ use {
 #[cfg(any(feature = "visualization", feature = "visualization_wasm"))]
 mod visualization;
 
-pub static DISCRETIZATION: f32 = 10.0 / 1.5;
-pub static TOROIDAL: bool = true;
+pub static DISCRETIZATION: f32 = 10.0 / 10.0;
+pub static TOROIDAL: bool = false;
 
 // Main used when only the simulation should run, without any visualization.
 #[cfg(not(any(feature = "visualization", feature = "visualization_wasm")))]
@@ -36,7 +36,7 @@ fn main() {
 fn main() {
     // Initialize the simulation and its visualization here.
 
-    let num_agents = 10;
+    let num_agents = 500;
     let dim: (f32, f32) = (400., 400.);
 
     let state = Sea::new(dim, num_agents);

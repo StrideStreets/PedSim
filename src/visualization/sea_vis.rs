@@ -1,4 +1,4 @@
-use crate::model::crab::Crab;
+use crate::model::pedestrian::Pedestrian;
 use crate::model::sea::Sea;
 use crate::visualization::crab_vis::CrabVis;
 use krabmaga::bevy::ecs as bevy_ecs;
@@ -35,7 +35,7 @@ impl VisualizationState<Sea> for SeaVis {
         _state: &Sea,
     ) -> Option<Box<dyn AgentRender>> {
         Some(Box::new(CrabVis {
-            id: agent.downcast_ref::<Crab>().unwrap().id,
+            id: agent.downcast_ref::<Pedestrian>().unwrap().id,
         }))
     }
 
@@ -45,13 +45,13 @@ impl VisualizationState<Sea> for SeaVis {
         state: &Box<&dyn State>,
     ) -> Option<Box<dyn Agent>> {
         let state = state.as_any().downcast_ref::<Sea>().unwrap();
-        match state.field.get(&Crab {
-            id: agent_render.get_id(),
-            loc: Real2D { x: 0., y: 0. },
-            last_d: Real2D { x: 0., y: 0. },
-            dir_x: 0.,
-            dir_y: 0.,
-        }) {
+        match state.field.get(&Pedestrian::new(
+            agent_render.get_id(),
+            Real2D { x: 0., y: 0. },
+            Real2D { x: 0., y: 0. },
+            None,
+            1.0,
+        )) {
             Some(matching_agent) => Some(Box::new(*matching_agent)),
             None => None,
         }

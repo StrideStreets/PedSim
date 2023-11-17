@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use super::crab::Crab;
+use super::pedestrian::Pedestrian;
 use crate::{DISCRETIZATION, TOROIDAL};
 use krabmaga::engine::fields::field::Field;
 use krabmaga::{
@@ -12,7 +12,7 @@ use krabmaga::{
 /// store the agents' locations.
 pub struct Sea {
     pub step: u64,
-    pub field: Field2D<Crab>,
+    pub field: Field2D<Pedestrian>,
     pub dim: (f32, f32),
     pub num_agents: u32,
 }
@@ -51,18 +51,23 @@ impl State for Sea {
         for i in 0..self.num_agents {
             let r1: f32 = rng.gen();
             let r2: f32 = rng.gen();
+            let d1: f32 = rng.gen();
+            let d2: f32 = rng.gen();
+            let speed: f32 = rng.gen();
+
             let last_d = Real2D { x: 0., y: 0. };
+
             let loc = Real2D {
                 x: self.dim.0 * r1,
                 y: self.dim.1 * r2,
             };
-            let agent = Crab {
-                id: i,
-                loc,
-                last_d,
-                dir_x: 1.0,
-                dir_y: 1.0,
-            };
+
+            let dest = Some(Real2D {
+                x: self.dim.0 * d1,
+                y: self.dim.1 * d2,
+            });
+
+            let agent = Pedestrian::new(i, loc, last_d, dest, 1.0);
             // Put the agent in your state
             schedule.schedule_repeating(Box::new(agent), 0., 0);
         }

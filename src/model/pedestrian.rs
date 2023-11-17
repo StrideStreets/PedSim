@@ -1,4 +1,4 @@
-use crate::model::sea::Sea;
+use crate::model::{calc_utils::normalize_motion_vector, sea::Sea};
 use core::fmt;
 use krabmaga::engine::agent::Agent;
 use krabmaga::engine::fields::field_2d::{toroidal_transform, Location2D};
@@ -22,51 +22,45 @@ pub struct Crab {
 pub struct Pedestrian {
     pub id: u32,
     pub loc: Real2D,
+    pub last_d: Real2D,
     pub dest: Option<Real2D>,
-    pub vec_x: f32,
-    pub vec_y: f32
-    pub done: bool,
+    pub dir_x: f32,
+    pub dir_y: f32,
+    pub speed: f32,
 }
 
 impl Pedestrian {
-    pub fn new(id: u32, loc: Real2D, dest: Option<Real2D>, vec_x: f32, vec_y: f32, done: bool) -> Pedestrian {
+    pub fn new(
+        id: u32,
+        loc: Real2D,
+        last_d: Real2D,
+        dest: Option<Real2D>,
+        speed: f32,
+    ) -> Pedestrian {
+        let dir_x: f32;
+        let dir_y: f32;
+
+        match dest {
+            Some(dest) => {
+                (dir_x, dir_y) = normalize_motion_vector(loc, dest);
+            }
+            None => {
+                dir_x = 0.0;
+                dir_y = 0.0;
+            }
+        };
+
         Pedestrian {
             id,
             loc,
+            last_d,
             dest,
-            vec_x,
-            vec_y,
-            done,
-        }
-    }
-
-    fn update_position(&mut self, state: ) {
-        if self.done {
-            return self.loc;
-        }
-
-        match self.dest {
-            //Eventually, this will be refined to check for boundary conditions and adjust direction as needed to maintain
-            //progress toward destination
-          Some(dest) => {
-            if (dest === self.loc){
-                self.done = true;
-                return self.loc;
-            }
-            let loc_x = toroidal_transform(self.loc.x + self.vec_x, state.field.width);
-            let loc_y = toroidal_transform(self.loc.y + self.vec_y, state.field.height);
-            return Real2D { x: loc_x, y: loc_y };
-          },
-          //Eventually, this will be changed to have person wander randomly
-          None => {
-            let loc_x = toroidal_transform(self.loc.x + self.vec_x, state.field.width);
-            let loc_y = toroidal_transform(self.loc.y + self.vec_y, state.field.height);
-            return Real2D { x: loc_x, y: loc_y };
-          }
+            dir_x,
+            dir_y,
+            speed,
         }
     }
 }
-
 
 impl Agent for Pedestrian {
     /// Put the code that should happen for each step, for each agent here.
@@ -74,25 +68,25 @@ impl Agent for Pedestrian {
         let state = state.as_any().downcast_ref::<Sea>().unwrap();
         let mut rng = rand::thread_rng();
 
-        if rng.gen_bool(0.5) {
-            self.vec_x -= 1.0;
+        if let Some(dest) = self.dest {
+            (self.dir_x, self.dir_y) = normalize_motion_vector(self.loc, dest)
         }
-        if rng.gen_bool(0.5) {
-            self.vec_y -= 1.0;
-        }
+        let loc_x = self.loc.x + self.dir_x * self.speed;
+        let loc_y = self.loc.y + self.dir_y * self.speed;
 
-        let new_loc = self.update_position(state);
+        let new_loc = Real2D { x: loc_x, y: loc_y };
         self.loc = new_loc;
 
-        state
-            .field
-            .set_object_location(*self, new_loc);
+        state.field.set_object_location(*self, new_loc);
     }
 
     /// Put the code that decides if an agent should be removed or not
     /// for example in simulation where agents can die
     fn is_stopped(&mut self, _state: &mut dyn State) -> bool {
-        false
+        match self.dest {
+            Some(dest) => ((self.loc.x - dest.x).abs() < 1.0) & ((self.loc.y - dest.y).abs() < 1.0),
+            None => false,
+        }
     }
 }
 
