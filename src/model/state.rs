@@ -1,10 +1,12 @@
 use std::any::Any;
 
-use super::pedestrian::Pedestrian;
-use crate::{DISCRETIZATION, TOROIDAL};
+use super::{object::Object, pedestrian::Pedestrian};
 use krabmaga::engine::fields::field::Field;
 use krabmaga::{
-    engine::{fields::field_2d::Field2D, location::Real2D, schedule::Schedule, state::State},
+    engine::{
+        fields::sparse_object_grid_2d::SparseGrid2D, location::Int2D, schedule::Schedule,
+        state::State,
+    },
     rand::{self, Rng},
 };
 
@@ -12,16 +14,18 @@ use krabmaga::{
 /// store the agents' locations.
 pub struct ModelState {
     pub step: u64,
-    pub field: Field2D<Pedestrian>,
-    pub dim: (f32, f32),
+    pub ped_grid: SparseGrid2D<Pedestrian>,
+    pub obj_grid: SparseGrid2D<Object>,
+    pub dim: (i32, i32),
     pub num_agents: u32,
 }
 
 impl ModelState {
-    pub fn new(dim: (f32, f32), num_agents: u32) -> ModelState {
+    pub fn new(dim: (i32, i32), num_agents: u32) -> ModelState {
         ModelState {
             step: 0,
-            field: Field2D::new(dim.0, dim.1, DISCRETIZATION, TOROIDAL),
+            ped_grid: SparseGrid2D::new(dim.0, dim.1),
+            obj_grid: SparseGrid2D::new(dim.0, dim.1),
             dim,
             num_agents,
         }
@@ -32,13 +36,14 @@ impl State for ModelState {
     /// Put the code that should be executed for each state update here. The state is updated once for each
     /// schedule step.
     fn update(&mut self, _step: u64) {
-        self.field.lazy_update();
+        self.ped_grid.lazy_update();
     }
 
     /// Put the code that should be executed to reset simulation state
     fn reset(&mut self) {
         self.step = 0;
-        self.field = Field2D::new(self.dim.0, self.dim.1, DISCRETIZATION, TOROIDAL);
+        self.ped_grid = SparseGrid2D::new(self.dim.0, self.dim.1);
+        self.obj_grid = SparseGrid2D::new(self.dim.0, self.dim.1)
     }
 
     /// Put the code that should be executed to initialize simulation:
@@ -49,25 +54,19 @@ impl State for ModelState {
         let mut rng = rand::thread_rng();
 
         for i in 0..self.num_agents {
-            let r1: f32 = rng.gen();
-            let r2: f32 = rng.gen();
-            let d1: f32 = rng.gen();
-            let d2: f32 = rng.gen();
-            let speed: f32 = rng.gen();
+            let lx: i32 = rng.gen_range(0..self.dim.0);
+            let ly: i32 = rng.gen_range(0..self.dim.1);
+            let dx: i32 = rng.gen_range(0..self.dim.0);
+            let dy: i32 = rng.gen_range(0..self.dim.1);
+            let speed: i32 = rng.gen_range(1..5);
 
-            let last_d = Real2D { x: 0., y: 0. };
+            let last_d = Int2D { x: 0, y: 0 };
 
-            let loc = Real2D {
-                x: self.dim.0 * r1,
-                y: self.dim.1 * r2,
-            };
+            let loc = Int2D { x: lx, y: ly };
 
-            let dest = Some(Real2D {
-                x: self.dim.0 * d1,
-                y: self.dim.1 * d2,
-            });
+            let dest = Some(Int2D { x: dx, y: dy });
 
-            let agent = Pedestrian::new(i, loc, last_d, dest, 1.0);
+            let agent = Pedestrian::new(i, loc, last_d, dest, 1);
             // Put the agent in your state
             schedule.schedule_repeating(Box::new(agent), 0., 0);
         }

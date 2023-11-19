@@ -25,10 +25,10 @@ impl AgentRender for PedVis {
     fn location(&self, agent: &Box<dyn Agent>, state: &Box<&dyn State>) -> (f32, f32, f32) {
         let state = state.as_any().downcast_ref::<ModelState>().unwrap();
         let agent = agent.downcast_ref::<Pedestrian>().unwrap();
-        let loc = state.field.get_location(*agent);
+        let loc = state.ped_grid.get_location(*agent);
         match loc {
-            Some(loc) => (loc.x, loc.y, 0.),
-            None => (agent.loc.x, agent.loc.y, 0.),
+            Some(loc) => (loc.x as f32, loc.y as f32, 0.),
+            None => (agent.loc.x as f32, agent.loc.y as f32, 0.),
         }
     }
 
@@ -40,10 +40,10 @@ impl AgentRender for PedVis {
     /// Define the degrees in radians to rotate the texture by.
     fn rotation(&self, agent: &Box<dyn Agent>, _state: &Box<&dyn State>) -> f32 {
         let concrete_agent = agent.downcast_ref::<Pedestrian>().unwrap();
-        let rotation = if concrete_agent.last_d.x == 0. || concrete_agent.last_d.y == 0. {
+        let rotation = if concrete_agent.last_d.x == 0 || concrete_agent.last_d.y == 0 {
             0.
         } else {
-            concrete_agent.last_d.y.atan2(concrete_agent.last_d.x)
+            (concrete_agent.last_d.y as f32).atan2(concrete_agent.last_d.x as f32)
         };
         rotation - PI
     }

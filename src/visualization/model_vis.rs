@@ -5,7 +5,7 @@ use krabmaga::bevy::ecs as bevy_ecs;
 use krabmaga::bevy::ecs::system::Resource;
 use krabmaga::bevy::prelude::Commands;
 use krabmaga::engine::agent::Agent;
-use krabmaga::engine::location::Real2D;
+use krabmaga::engine::location::Int2D;
 use krabmaga::engine::schedule::Schedule;
 use krabmaga::engine::state::State;
 use krabmaga::visualization::agent_render::AgentRender;
@@ -45,14 +45,14 @@ impl VisualizationState<ModelState> for ModelVis {
         state: &Box<&dyn State>,
     ) -> Option<Box<dyn Agent>> {
         let state = state.as_any().downcast_ref::<ModelState>().unwrap();
-        match state.field.get(&Pedestrian::new(
+        match state.ped_grid.get(&Pedestrian::new(
             agent_render.get_id(),
-            Real2D { x: 0., y: 0. },
-            Real2D { x: 0., y: 0. },
+            Int2D { x: 0, y: 0 },
+            Int2D { x: 0, y: 0 },
             None,
-            1.0,
+            1,
         )) {
-            Some(matching_agent) => Some(Box::new(*matching_agent)),
+            Some(matching_agent) => Some(Box::new(matching_agent)),
             None => None,
         }
     }

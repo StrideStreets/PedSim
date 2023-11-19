@@ -15,8 +15,8 @@ use {
 #[cfg(any(feature = "visualization", feature = "visualization_wasm"))]
 mod visualization;
 
-pub static DISCRETIZATION: f32 = 10.0 / 10.0;
-pub static TOROIDAL: bool = false;
+//pub static DISCRETIZATION: f32 = 10.0 / 10.0;
+//pub static TOROIDAL: bool = false;
 
 // Main used when only the simulation should run, without any visualization.
 #[cfg(not(any(feature = "visualization", feature = "visualization_wasm")))]
@@ -24,9 +24,9 @@ fn main() {
     let step = 100;
 
     let num_agents = 20;
-    let dim: (f32, f32) = (400., 400.);
+    let dim: (i32, i32) = (400, 400);
 
-    let state = Sea::new(dim, num_agents);
+    let state = ModelState::new(dim, num_agents);
 
     simulate!(state, step, 10);
 }
@@ -37,12 +37,12 @@ fn main() {
     // Initialize the simulation and its visualization here.
 
     let num_agents = 500;
-    let dim: (f32, f32) = (400., 400.);
+    let dim: (i32, i32) = (400, 400);
 
     let state = ModelState::new(dim, num_agents);
     Visualization::default()
         .with_window_dimensions(800., 800.)
-        .with_simulation_dimensions(dim.0, dim.1)
+        .with_simulation_dimensions(dim.0 as f32, dim.1 as f32)
         .with_background_color(Color::BLUE)
         .with_name("Template")
         .start::<ModelVis, ModelState>(ModelVis, state);
