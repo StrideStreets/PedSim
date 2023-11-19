@@ -1,4 +1,4 @@
-use crate::model::{calc_utils::normalize_motion_vector, state::ModelState};
+use crate::model::{calc_utils::navigation_distance::normalize_motion_vector, state::ModelState};
 use core::fmt;
 use krabmaga::engine::agent::Agent;
 use krabmaga::engine::fields::field_2d::{toroidal_transform, Location2D};

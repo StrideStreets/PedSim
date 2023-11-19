@@ -1,6 +1,7 @@
 use std::any::Any;
 
 use super::{
+    calc_utils::navigation_distance::{find_origin_destination_path, make_navigable_matrix},
     object::{Object, ObjectType},
     pedestrian::Pedestrian,
 };
@@ -65,6 +66,29 @@ impl State for ModelState {
 
         let mut rng = rand::thread_rng();
 
+        //Make a test obstacle
+        let mut obstacle_id = 0;
+        for x in ((self.dim.0 / 5.) as i32)..((self.dim.0 / 4.) as i32) {
+            for y in ((self.dim.1 / 5.) as i32)..((self.dim.1 / 4.) as i32) {
+                let obstacle_location = Int2D { x: x, y: y };
+                self.obj_grid.set_object_location(
+                    Object {
+                        id: obstacle_id,
+                        value: ObjectType::Obstacle,
+                        location: *&obstacle_location,
+                    },
+                    &obstacle_location,
+                );
+
+                obstacle_id += 1;
+            }
+        }
+
+        self.obj_grid.update();
+
+        //Make matrix representation of grid that will be used for pathfinding
+        let navigable_object_grid = make_navigable_matrix::<i32, Object>(&self.obj_grid);
+
         //Make agents
         for i in 0..self.num_agents {
             let r1: f32 = rng.gen();
@@ -88,27 +112,21 @@ impl State for ModelState {
             let agent = Pedestrian::new(i, loc, last_d, dest, 1.0);
             // Put the agent in your state
             schedule.schedule_repeating(Box::new(agent), 0., 0);
+
+            let this_dest = dest.unwrap_or(Real2D { x: 1., y: 1. });
+
+            find_origin_destination_path::<Int2D, i32>(
+                Int2D {
+                    x: loc.x as i32,
+                    y: loc.y as i32,
+                },
+                Int2D {
+                    x: this_dest.x as i32,
+                    y: this_dest.y as i32,
+                },
+                &navigable_object_grid,
+            );
         }
-
-        //Make a test obstacle
-        let mut obstacle_id = 0;
-        for x in ((self.dim.0 / 5.) as i32)..((self.dim.0 / 4.) as i32) {
-            for y in ((self.dim.1 / 5.) as i32)..((self.dim.1 / 4.) as i32) {
-                let obstacle_location = Int2D { x: x, y: y };
-                self.obj_grid.set_object_location(
-                    Object {
-                        id: obstacle_id,
-                        value: ObjectType::Obstacle,
-                        location: *&obstacle_location,
-                    },
-                    &obstacle_location,
-                );
-
-                obstacle_id += 1;
-            }
-        }
-
-        self.obj_grid.update();
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
