@@ -1,15 +1,23 @@
-use crate::model::pedestrian::Pedestrian;
 use crate::model::state::ModelState;
+use crate::model::{
+    object::{Object, ObjectType},
+    pedestrian::Pedestrian,
+};
 use crate::visualization::ped_vis::PedVis;
 use krabmaga::bevy::ecs as bevy_ecs;
+use krabmaga::bevy::ecs::component::TableStorage;
 use krabmaga::bevy::ecs::system::Resource;
 use krabmaga::bevy::prelude::Commands;
+use krabmaga::bevy::prelude::Component;
 use krabmaga::engine::agent::Agent;
-use krabmaga::engine::location::Real2D;
+use krabmaga::engine::fields::dense_object_grid_2d::DenseGrid2D;
+use krabmaga::engine::fields::sparse_object_grid_2d::SparseGrid2D;
+use krabmaga::engine::location::{Int2D, Real2D};
 use krabmaga::engine::schedule::Schedule;
 use krabmaga::engine::state::State;
 use krabmaga::visualization::agent_render::AgentRender;
 use krabmaga::visualization::asset_handle_factory::AssetHandleFactoryResource;
+use krabmaga::visualization::fields::object_grid_2d::RenderObjectGrid2D;
 use krabmaga::visualization::simulation_descriptor::SimulationDescriptor;
 use krabmaga::visualization::visualization_state::VisualizationState;
 
@@ -27,6 +35,7 @@ impl VisualizationState<ModelState> for ModelVis {
         _schedule: &mut Schedule,
         _sim: &mut SimulationDescriptor,
     ) {
+        SparseGrid2D::<Object>::init_graphics_grid(_sprite_render_factory, _commands, _state);
     }
 
     fn get_agent_render(
@@ -54,6 +63,44 @@ impl VisualizationState<ModelState> for ModelVis {
         )) {
             Some(matching_agent) => Some(Box::new(*matching_agent)),
             None => None,
+        }
+    }
+}
+
+impl Component for Object {
+    type Storage = TableStorage;
+}
+
+impl RenderObjectGrid2D<ModelState, Object> for SparseGrid2D<Object> {
+    fn fetch_sparse_grid(state: &ModelState) -> Option<&SparseGrid2D<Object>> {
+        Some(&state.obj_grid)
+    }
+
+    fn fetch_dense_grid(_state: &ModelState) -> Option<&DenseGrid2D<Object>> {
+        None
+    }
+
+    fn fetch_emoji(_state: &ModelState, obj: &Object) -> String {
+        match obj.value {
+            ObjectType::Path => "house".to_string(),
+            ObjectType::Obstacle => "no_entry_sign".to_string(),
+            //_ => panic!("Object not recognized."),
+        }
+    }
+
+    fn fetch_loc(state: &ModelState, obj: &Object) -> Option<Int2D> {
+        state.obj_grid.get_location(*obj)
+    }
+
+    fn fetch_rotation(_state: &ModelState, _obj: &Object) -> f32 {
+        0.0
+    }
+
+    fn scale(obj: &Object) -> (f32, f32) {
+        match obj.value {
+            ObjectType::Path => (0.1, 0.1),
+            ObjectType::Obstacle => (0.05, 0.05),
+            //_ => panic!("Object not recognized."),
         }
     }
 }

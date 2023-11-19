@@ -36,6 +36,12 @@ impl ModelState {
             num_agents,
         }
     }
+
+    pub fn get_obstacle(&self, loc: &Int2D) -> Option<Vec<Object>> {
+        self.obj_grid
+            .get_objects(loc)
+            .filter(|vec| vec.first().unwrap().value == ObjectType::Obstacle)
+    }
 }
 
 impl State for ModelState {
