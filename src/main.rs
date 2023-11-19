@@ -26,7 +26,7 @@ fn main() {
     let num_agents = 20;
     let dim: (f32, f32) = (400., 400.);
 
-    let state = Sea::new(dim, num_agents);
+    let state = ModelState::new(dim, num_agents);
 
     simulate!(state, step, 10);
 }
