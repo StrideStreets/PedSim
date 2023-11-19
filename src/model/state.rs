@@ -1,10 +1,18 @@
 use std::any::Any;
 
-use super::pedestrian::Pedestrian;
+use super::{
+    object::{Object, ObjectType},
+    pedestrian::Pedestrian,
+};
 use crate::{DISCRETIZATION, TOROIDAL};
 use krabmaga::engine::fields::field::Field;
 use krabmaga::{
-    engine::{fields::field_2d::Field2D, location::Real2D, schedule::Schedule, state::State},
+    engine::{
+        fields::{field_2d::Field2D, sparse_object_grid_2d::SparseGrid2D},
+        location::{Int2D, Real2D},
+        schedule::Schedule,
+        state::State,
+    },
     rand::{self, Rng},
 };
 
@@ -13,6 +21,7 @@ use krabmaga::{
 pub struct ModelState {
     pub step: u64,
     pub field: Field2D<Pedestrian>,
+    pub obj_grid: SparseGrid2D<Object>,
     pub dim: (f32, f32),
     pub num_agents: u32,
 }
@@ -22,6 +31,7 @@ impl ModelState {
         ModelState {
             step: 0,
             field: Field2D::new(dim.0, dim.1, DISCRETIZATION, TOROIDAL),
+            obj_grid: SparseGrid2D::new(dim.0 as i32, dim.1 as i32),
             dim,
             num_agents,
         }
@@ -39,6 +49,7 @@ impl State for ModelState {
     fn reset(&mut self) {
         self.step = 0;
         self.field = Field2D::new(self.dim.0, self.dim.1, DISCRETIZATION, TOROIDAL);
+        self.obj_grid = SparseGrid2D::new(self.dim.0 as i32, self.dim.1 as i32)
     }
 
     /// Put the code that should be executed to initialize simulation:
@@ -48,6 +59,7 @@ impl State for ModelState {
 
         let mut rng = rand::thread_rng();
 
+        //Make agents
         for i in 0..self.num_agents {
             let r1: f32 = rng.gen();
             let r2: f32 = rng.gen();
@@ -71,6 +83,26 @@ impl State for ModelState {
             // Put the agent in your state
             schedule.schedule_repeating(Box::new(agent), 0., 0);
         }
+
+        //Make a test obstacle
+        let mut obstacle_id = 0;
+        for x in ((self.dim.0 / 5.) as i32)..((self.dim.0 / 4.) as i32) {
+            for y in ((self.dim.1 / 5.) as i32)..((self.dim.1 / 4.) as i32) {
+                let obstacle_location = Int2D { x: x, y: y };
+                self.obj_grid.set_object_location(
+                    Object {
+                        id: obstacle_id,
+                        value: ObjectType::Obstacle,
+                        location: *&obstacle_location,
+                    },
+                    &obstacle_location,
+                );
+
+                obstacle_id += 1;
+            }
+        }
+
+        self.obj_grid.update();
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
