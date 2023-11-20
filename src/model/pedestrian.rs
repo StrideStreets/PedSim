@@ -8,6 +8,8 @@ use krabmaga::rand;
 use krabmaga::rand::Rng;
 use std::hash::{Hash, Hasher};
 
+use super::calc_utils::navigation_distance::find_origin_destination_path;
+
 /// The most basic agent should implement Clone, Copy and Agent to be able to be inserted in a Schedule.
 #[derive(Clone, Copy)]
 pub struct Crab {

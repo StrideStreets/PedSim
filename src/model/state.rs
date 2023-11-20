@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::{any::Any, collections::HashMap};
 
 use super::{
     calc_utils::navigation_distance::{find_origin_destination_path, make_navigable_matrix},
@@ -23,6 +23,7 @@ pub struct ModelState {
     pub step: u64,
     pub field: Field2D<Pedestrian>,
     pub obj_grid: SparseGrid2D<Object>,
+    pub ped_paths: HashMap<u32, std::vec::IntoIter<Real2D>>,
     pub dim: (f32, f32),
     pub num_agents: u32,
 }
@@ -33,6 +34,7 @@ impl ModelState {
             step: 0,
             field: Field2D::new(dim.0, dim.1, DISCRETIZATION, TOROIDAL),
             obj_grid: SparseGrid2D::new(dim.0 as i32, dim.1 as i32),
+            ped_paths: HashMap::<u32, std::vec::IntoIter<Real2D>>::new(),
             dim,
             num_agents,
         }
@@ -113,9 +115,12 @@ impl State for ModelState {
             // Put the agent in your state
             schedule.schedule_repeating(Box::new(agent), 0., 0);
 
+            //Pre-compute shortest paths for agents, and place in ped_paths
+            // In this case, we should convert vector of Int2D to Real2D, since we will use these
+            // values as positions for our agents on a real field
             let this_dest = dest.unwrap_or(Real2D { x: 1., y: 1. });
 
-            let shortest_path = find_origin_destination_path::<Int2D, i32>(
+            if let Ok(shortest_path) = find_origin_destination_path::<Int2D, i32>(
                 Int2D {
                     x: loc.x as i32,
                     y: loc.y as i32,
@@ -125,7 +130,19 @@ impl State for ModelState {
                     y: this_dest.y as i32,
                 },
                 &navigable_object_grid,
-            );
+            )
+            .and_then(|node_vec| {
+                let real_vec: Vec<Real2D> = node_vec
+                    .into_iter()
+                    .map(|node| Real2D {
+                        x: node.x as f32,
+                        y: node.y as f32,
+                    })
+                    .collect();
+                Ok(real_vec)
+            }) {
+                self.ped_paths.insert(i, shortest_path.into_iter());
+            }
         }
     }
 

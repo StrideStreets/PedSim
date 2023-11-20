@@ -55,7 +55,7 @@ pub fn find_origin_destination_path<T, N>(
     origin: T,
     destination: T,
     grid: &Array2<i8>,
-) -> Result<VecDeque<T>, Error>
+) -> Result<Vec<T>, Error>
 where
     T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>> + TryFrom<Num2D<N>>,
     N: Clone
@@ -81,7 +81,7 @@ where
         .map_err(|e| anyhow!("Failed to convert destinations point to Num2D"))?;
 
     astar(converted_origin, converted_destination, grid.clone()).and_then(|queue| {
-        let converted_path: VecDeque<T> = queue
+        let converted_path: Vec<T> = queue
             .iter()
             .filter_map(|node| {
                 (*node)
