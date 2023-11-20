@@ -26,6 +26,8 @@ fn main() {
     let num_agents = 500;
     let dim: (f32, f32) = (400., 400.);
 
+    //let (agents, paths)
+
     let state = ModelState::new(dim, num_agents);
 
     simulate!(state, step, 10);

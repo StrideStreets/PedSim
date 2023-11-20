@@ -4,6 +4,7 @@ use super::{
     calc_utils::navigation_distance::{find_origin_destination_path, make_navigable_matrix},
     object::{Object, ObjectType},
     pedestrian::Pedestrian,
+    state_components::*,
 };
 use crate::{DISCRETIZATION, TOROIDAL};
 use krabmaga::engine::fields::field::Field;
@@ -21,6 +22,7 @@ use krabmaga::{
 /// store the agents' locations.
 pub struct ModelState {
     pub step: u64,
+    pub peds: Vec<Pedestrian>,
     pub field: Field2D<Pedestrian>,
     pub obj_grid: SparseGrid2D<Object>,
     pub ped_paths: HashMap<u32, std::vec::IntoIter<Real2D>>,
@@ -30,11 +32,27 @@ pub struct ModelState {
 
 impl ModelState {
     pub fn new(dim: (f32, f32), num_agents: u32) -> ModelState {
+        //Initialize pedestrian records
+        let peds = make_peds(num_agents, dim);
+
+        //Make field for pedestrians
+        let field = make_field(dim);
+
+        //Make object grid
+        let obj_grid = make_object_grid(dim);
+
+        //Make matrix representation of grid that will be used for pathfinding
+        let navigable_object_grid = make_navigable_matrix::<i32, Object>(&obj_grid);
+
+        //Calculate paths, given pedestrians
+        let ped_paths = make_paths(&peds, &navigable_object_grid);
+
         ModelState {
             step: 0,
-            field: Field2D::new(dim.0, dim.1, DISCRETIZATION, TOROIDAL),
-            obj_grid: SparseGrid2D::new(dim.0 as i32, dim.1 as i32),
-            ped_paths: HashMap::<u32, std::vec::IntoIter<Real2D>>::new(),
+            peds,
+            field,
+            obj_grid,
+            ped_paths,
             dim,
             num_agents,
         }
@@ -57,8 +75,8 @@ impl State for ModelState {
     /// Put the code that should be executed to reset simulation state
     fn reset(&mut self) {
         self.step = 0;
-        self.field = Field2D::new(self.dim.0, self.dim.1, DISCRETIZATION, TOROIDAL);
-        self.obj_grid = SparseGrid2D::new(self.dim.0 as i32, self.dim.1 as i32)
+        self.field = make_field(self.dim);
+        self.obj_grid = make_object_grid(self.dim);
     }
 
     /// Put the code that should be executed to initialize simulation:
@@ -66,92 +84,13 @@ impl State for ModelState {
     fn init(&mut self, schedule: &mut Schedule) {
         self.step = 0;
 
-        let mut rng = rand::thread_rng();
+        let mut peds_iter = self.peds.iter();
 
-        //Make a test obstacle
-        let mut obstacle_id = 0;
-        for x in ((self.dim.0 / 4.) as i32)..(3 * (self.dim.0 / 4.) as i32) {
-            for y in ((self.dim.1 / 5.) as i32)..((self.dim.1 / 4.) as i32) {
-                let obstacle_location = Int2D { x: x, y: y };
-                self.obj_grid.set_object_location(
-                    Object {
-                        id: obstacle_id,
-                        value: ObjectType::Obstacle,
-                        location: *&obstacle_location,
-                    },
-                    &obstacle_location,
-                );
-
-                obstacle_id += 1;
-            }
+        while let Some(agent) = peds_iter.next() {
+            schedule.schedule_repeating(Box::new(*agent), 0., 0);
         }
 
         self.obj_grid.update();
-
-        //Make matrix representation of grid that will be used for pathfinding
-        let navigable_object_grid = make_navigable_matrix::<i32, Object>(&self.obj_grid);
-        //println!("Made navigable grid");
-
-        //Make agents
-        for i in 0..self.num_agents {
-            let r1: f32 = rng.gen();
-            let r2: f32 = rng.gen();
-            let d1: f32 = rng.gen();
-            let d2: f32 = rng.gen();
-            let speed: f32 = rng.gen();
-
-            let last_d = Real2D { x: 0., y: 0. };
-
-            let loc = Real2D {
-                x: self.dim.0 * r1,
-                y: self.dim.1 * r2,
-            };
-
-            let dest = Some(Real2D {
-                x: self.dim.0 * d1,
-                y: self.dim.1 * d2,
-            });
-
-            //Pre-compute shortest paths for agents, and place in ped_paths
-            // In this case, we should convert vector of Int2D to Real2D, since we will use these
-            // values as positions for our agents on a real field
-            let this_dest = dest.unwrap_or(Real2D { x: 1., y: 1. });
-
-            match find_origin_destination_path::<Int2D, i32>(
-                Int2D {
-                    x: loc.x as i32,
-                    y: loc.y as i32,
-                },
-                Int2D {
-                    x: this_dest.x as i32,
-                    y: this_dest.y as i32,
-                },
-                &navigable_object_grid,
-            )
-            .and_then(|node_vec| {
-                //println!("Located path for {}", i);
-                let real_vec: Vec<Real2D> = node_vec
-                    .into_iter()
-                    .map(|node| Real2D {
-                        x: node.x as f32,
-                        y: node.y as f32,
-                    })
-                    .collect();
-                Ok(real_vec)
-            }) {
-                Ok(shortest_path) => {
-                    //println!("Found path for agent {}", i);
-                    self.ped_paths.insert(i, shortest_path.into_iter());
-                }
-                Err(e) => {
-                    //println!("{}", e);
-                }
-            }
-
-            let agent = Pedestrian::new(i, loc, last_d, dest, 1.0);
-            // Put the agent in your state
-            schedule.schedule_repeating(Box::new(agent), 0., 0);
-        }
         //println!("{:?}", self.ped_paths);
     }
 
