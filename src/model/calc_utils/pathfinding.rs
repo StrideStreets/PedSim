@@ -62,7 +62,7 @@ where
 }
 
 //TO BE EDITED WHEN SWITCHING TO GRAPH REPRESENTATION
-fn get_additional_distance<T>(current: T, neighbor: T) -> f64 {
+fn get_additional_distance<T>(_current: T, _neighbor: T) -> f64 {
     1.
 }
 
@@ -71,7 +71,7 @@ where
     N: Sub<Output = N> + TryInto<f64> + Copy + 'static,
     f64: AsPrimitive<N>,
 {
-    current.manhattan_distance(&dest)
+    current.manhattan_distance(dest)
 }
 
 fn reconstruct_path<N>(
@@ -115,9 +115,9 @@ where
     f64: AsPrimitive<N>,
 {
     //println!("Origin: {}\nDestination: {}", origin, destination);
-    let x_min: usize = 0;
+    let _x_min: usize = 0;
     let x_max: usize = grid.ncols() - 1;
-    let y_min: usize = 0;
+    let _y_min: usize = 0;
     let y_max: usize = grid.nrows() - 1;
 
     //Priority queue for examining nodes
@@ -170,7 +170,7 @@ where
                 neighbors.push((u_x, u_y + 1));
             }
 
-            let valid_neighbors = neighbors
+            neighbors
                 .into_iter()
                 .filter(|(col, row)| grid[[*row, *col]] == 1)
                 .for_each(|(col, row)| {
@@ -212,7 +212,7 @@ where
                 });
         }
     }
-    return Err(anyhow!(
+    Err(anyhow!(
         "Failed to locate valid path from origin to destination"
-    ));
+    ))
 }

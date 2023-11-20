@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error};
 use krabmaga::engine::location::{Int2D, Real2D};
-use num_traits::{AsPrimitive, Num};
+use num_traits::AsPrimitive;
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
@@ -53,11 +53,11 @@ where
             x: value
                 .x
                 .try_into()
-                .map_err(|e| anyhow!("Failed to convert i32 into provided numerical type"))?,
+                .map_err(|_e| anyhow!("Failed to convert i32 into provided numerical type"))?,
             y: value
                 .y
                 .try_into()
-                .map_err(|e| anyhow!("Failed to convert i32 into provided numerical type"))?,
+                .map_err(|_e| anyhow!("Failed to convert i32 into provided numerical type"))?,
         })
     }
 }
@@ -81,11 +81,11 @@ where
             x: value
                 .x
                 .try_into()
-                .map_err(|e| anyhow!("Failed to convert f32 into provided numerical type"))?,
+                .map_err(|_e| anyhow!("Failed to convert f32 into provided numerical type"))?,
             y: value
                 .y
                 .try_into()
-                .map_err(|e| anyhow!("Failed to convert f32 into provided numerical type"))?,
+                .map_err(|_e| anyhow!("Failed to convert f32 into provided numerical type"))?,
         })
     }
 }
@@ -106,20 +106,20 @@ where
     fn euclidean_distance(&self, other: &Self) -> Result<N, Error> {
         let dx: f64 = (other.x - self.x)
             .try_into()
-            .map_err(|e| anyhow!("Could not convert dx into f64"))?;
+            .map_err(|_e| anyhow!("Could not convert dx into f64"))?;
         let dy: f64 = (other.y - self.y)
             .try_into()
-            .map_err(|e| anyhow!("Could not convert dy into f64"))?;
+            .map_err(|_e| anyhow!("Could not convert dy into f64"))?;
         Ok((dx.powf(2.) + dy.powf(2.)).sqrt().round().as_())
     }
 
     fn manhattan_distance(&self, other: &Self) -> Result<N, Error> {
         let dx: f64 = (other.x - self.x)
             .try_into()
-            .map_err(|e| anyhow!("Could not convert dx into f64"))?;
+            .map_err(|_e| anyhow!("Could not convert dx into f64"))?;
         let dy: f64 = (other.y - self.y)
             .try_into()
-            .map_err(|e| anyhow!("Could not convert dy into f64"))?;
+            .map_err(|_e| anyhow!("Could not convert dy into f64"))?;
         Ok((dx.abs() + dy.abs()).as_())
     }
 
@@ -148,7 +148,7 @@ impl NavigationPoint<i32> for Int2D {
     }
 
     fn manhattan_distance(&self, other: &Self) -> Result<i32, Error> {
-        Ok((self.x - other.x).abs() as i32 + (self.y - other.y).abs() as i32)
+        Ok((self.x - other.x).abs() + (self.y - other.y).abs())
     }
 }
 

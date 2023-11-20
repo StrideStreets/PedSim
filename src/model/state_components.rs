@@ -23,12 +23,12 @@ pub fn make_object_grid(dim: (f32, f32)) -> SparseGrid2D<Object> {
     let mut obstacle_id = 0;
     for x in ((dim.0 / 4.) as i32)..(3 * (dim.0 / 4.) as i32) {
         for y in ((dim.1 / 5.) as i32)..((dim.1 / 4.) as i32) {
-            let obstacle_location = Int2D { x: x, y: y };
+            let obstacle_location = Int2D { x, y };
             obj_grid.set_object_location(
                 Object {
                     id: obstacle_id,
                     value: ObjectType::Obstacle,
-                    location: *&obstacle_location,
+                    location: obstacle_location,
                 },
                 &obstacle_location,
             );
@@ -52,7 +52,7 @@ pub fn make_peds(num_peds: u32, dim: (f32, f32)) -> Vec<Pedestrian> {
         let r2: f32 = rng.gen();
         let d1: f32 = rng.gen();
         let d2: f32 = rng.gen();
-        let speed: f32 = rng.gen();
+        let _speed: f32 = rng.gen();
 
         let last_d = Real2D { x: 0., y: 0. };
 
@@ -93,9 +93,9 @@ pub fn make_paths(
                     x: this_dest.x as i32,
                     y: this_dest.y as i32,
                 },
-                &navigable_object_grid,
+                navigable_object_grid,
             )
-            .and_then(|node_vec| {
+            .map(|node_vec| {
                 //println!("Located path for {}", i);
                 let real_vec: Vec<Real2D> = node_vec
                     .into_iter()
@@ -104,13 +104,13 @@ pub fn make_paths(
                         y: node.y as f32,
                     })
                     .collect();
-                Ok(real_vec)
+                real_vec
             }) {
                 Ok(shortest_path) => {
                     //println!("Found path for agent {}", i);
                     ped_path_map.insert(*id, shortest_path.into_iter());
                 }
-                Err(e) => {
+                Err(_e) => {
                     //println!("{}", e);
                 }
             }

@@ -6,12 +6,11 @@ use krabmaga::engine::location::{Int2D, Real2D};
 use ndarray::Array2;
 use num_traits::AsPrimitive;
 use std::cmp::Eq;
-use std::collections::VecDeque;
+
 use std::fmt::{Debug, Display};
-use std::format;
-use std::fs::File;
+
 use std::hash::Hash;
-use std::io::Write;
+
 use std::ops::Add;
 use std::ops::Sub;
 
@@ -43,8 +42,8 @@ where
                     .expect("Row index should be convertible from usize"),
             };
             *value_ref = match grid.get_objects(&loc) {
-                Some(_) => 0 as i8,
-                None => 1 as i8,
+                Some(_) => 0_i8,
+                None => 1_i8,
             };
         });
 
@@ -75,19 +74,19 @@ where
 {
     let converted_origin = origin
         .try_into()
-        .map_err(|e| anyhow!("Failed to convert origin point to Num2D"))?;
+        .map_err(|_e| anyhow!("Failed to convert origin point to Num2D"))?;
 
     let converted_destination = destination
         .try_into()
-        .map_err(|e| anyhow!("Failed to convert destinations point to Num2D"))?;
+        .map_err(|_e| anyhow!("Failed to convert destinations point to Num2D"))?;
 
-    astar(converted_origin, converted_destination, grid.clone()).and_then(|queue| {
+    astar(converted_origin, converted_destination, grid.clone()).map(|queue| {
         let converted_path: Vec<T> = queue
             .iter()
             .filter_map(|node| {
                 (*node)
                     .try_into()
-                    .map_err(|e| {
+                    .map_err(|_e| {
                         anyhow!(
                     "Failed while converting path from intermediary Num2D to original node format"
                 )
@@ -95,6 +94,6 @@ where
                     .ok()
             })
             .collect();
-        Ok(converted_path)
+        converted_path
     })
 }

@@ -1,21 +1,18 @@
 use std::{any::Any, collections::HashMap};
 
 use super::{
-    calc_utils::navigation_distance::{find_origin_destination_path, make_navigable_matrix},
+    calc_utils::navigation_distance::make_navigable_matrix,
     object::{Object, ObjectType},
     pedestrian::Pedestrian,
     state_components::*,
 };
-use crate::{DISCRETIZATION, TOROIDAL};
+
 use krabmaga::engine::fields::field::Field;
-use krabmaga::{
-    engine::{
-        fields::{field_2d::Field2D, sparse_object_grid_2d::SparseGrid2D},
-        location::{Int2D, Real2D},
-        schedule::Schedule,
-        state::State,
-    },
-    rand::{self, Rng},
+use krabmaga::engine::{
+    fields::{field_2d::Field2D, sparse_object_grid_2d::SparseGrid2D},
+    location::{Int2D, Real2D},
+    schedule::Schedule,
+    state::State,
 };
 
 /// Expand the state definition according to your model, for example by having a grid struct field to
@@ -84,9 +81,9 @@ impl State for ModelState {
     fn init(&mut self, schedule: &mut Schedule) {
         self.step = 0;
 
-        let mut peds_iter = self.peds.iter();
+        let peds_iter = self.peds.iter();
 
-        while let Some(agent) = peds_iter.next() {
+        for agent in peds_iter {
             schedule.schedule_repeating(Box::new(*agent), 0., 0);
         }
 

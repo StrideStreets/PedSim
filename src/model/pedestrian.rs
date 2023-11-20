@@ -1,14 +1,14 @@
 use crate::model::{calc_utils::navigation_distance::normalize_motion_vector, state::ModelState};
 use core::fmt;
 use krabmaga::engine::agent::Agent;
-use krabmaga::engine::fields::field_2d::{toroidal_transform, Location2D};
+use krabmaga::engine::fields::field_2d::{Location2D};
 use krabmaga::engine::location::Real2D;
 use krabmaga::engine::state::State;
 use krabmaga::rand;
-use krabmaga::rand::Rng;
+
 use std::hash::{Hash, Hasher};
 
-use super::calc_utils::navigation_distance::find_origin_destination_path;
+
 
 /// The most basic agent should implement Clone, Copy and Agent to be able to be inserted in a Schedule.
 #[derive(Clone, Copy)]
@@ -81,7 +81,7 @@ impl Agent for Pedestrian {
                 }
             }
             None => {
-                let rng = rand::thread_rng();
+                let _rng = rand::thread_rng();
 
                 if let Some(dest) = self.dest {
                     (self.dir_x, self.dir_y) = normalize_motion_vector(self.loc, dest)
