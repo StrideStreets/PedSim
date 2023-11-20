@@ -3,6 +3,7 @@ use super::utility_types::Num2D;
 use anyhow::anyhow;
 use anyhow::Error;
 use ndarray::Array2;
+use num_traits::AsPrimitive;
 use std::cmp::Eq;
 use std::cmp::Ordering;
 use std::cmp::Reverse;
@@ -16,7 +17,7 @@ use std::ops::Add;
 use std::ops::Sub;
 
 #[derive(Clone, Debug, Hash)]
-struct NodeDistance<N> {
+pub struct NodeDistance<N> {
     node: Num2D<N>,
     dist: N,
 }
@@ -55,9 +56,10 @@ fn get_additional_distance<T>(current: T, neighbor: T) -> f64 {
     1.
 }
 
-fn get_distance_estimate<N>(current: &Num2D<N>, dest: &Num2D<N>) -> N
+fn get_distance_estimate<N>(current: &Num2D<N>, dest: &Num2D<N>) -> Result<N, Error>
 where
-    N: Sub<Output = N> + From<f64> + Into<f64>,
+    N: Sub<Output = N> + TryInto<f64> + Copy + 'static,
+    f64: AsPrimitive<N>,
 {
     current.manhattan_distance(&dest)
 }
@@ -67,13 +69,13 @@ fn reconstruct_path<N>(
     prev_position_map: &HashMap<Num2D<N>, Num2D<N>>,
 ) -> VecDeque<Num2D<N>>
 where
-    Num2D<N>: Hash + PartialEq + Eq,
+    Num2D<N>: Hash + PartialEq + Eq + Copy,
 {
     let mut current_node = node;
     let mut path = VecDeque::<Num2D<N>>::new();
     while let Some(prev_node) = prev_position_map.get(current_node) {
         path.push_front(*prev_node);
-        current_node = &prev_node;
+        current_node = prev_node;
     }
 
     path
@@ -93,12 +95,13 @@ where
         + TryInto<usize>
         + Sub<Output = N>
         + Add<Output = N>
-        + From<f64>
-        + Into<f64>
-        + PartialOrd,
+        + TryInto<f64>
+        + PartialOrd
+        + 'static,
     Num2D<N>: Eq + PartialEq + Hash,
     NodeDistance<N>: Ord + Eq,
     <N as TryFrom<usize>>::Error: Debug,
+    f64: AsPrimitive<N>,
 {
     let x_min: usize = 0;
     let x_max: usize = grid.ncols() - 1;
@@ -116,12 +119,12 @@ where
     //Add to priority queue an item holding the node and its distance estimate
     node_queue.push(Reverse(NodeDistance {
         node: origin,
-        dist: get_distance_estimate(&origin, &destination),
+        dist: get_distance_estimate(&origin, &destination)?,
     }));
 
     current_shortest_distance.insert(origin, N::default());
 
-    estimated_shortest_distance.insert(origin, origin.manhattan_distance(&destination));
+    estimated_shortest_distance.insert(origin, origin.manhattan_distance(&destination)?);
 
     while let Some(Reverse(node_dist)) = node_queue.pop() {
         let NodeDistance {
@@ -129,7 +132,7 @@ where
             dist: est_dist,
         } = node_dist;
 
-        let current_dist = est_dist - get_distance_estimate(&node, &destination);
+        let current_dist = est_dist - get_distance_estimate(&node, &destination)?;
 
         //Remove node from tracker set...
         queued_node_set.remove(&node);
@@ -167,30 +170,31 @@ where
                             .expect("Grid Y coordinate should be convertible into N"),
                     };
 
-                    let added_dist: N = get_additional_distance(neib_node, destination).into();
-
+                    let added_dist: N = get_additional_distance(neib_node, destination).as_();
                     if let Some(curr_dist) = current_shortest_distance.get(&neib_node) {
                         if *curr_dist <= current_dist + added_dist {
                             return;
                         }
                     }
-                    //If our new distance (dist + added_dist) is less than curr_dist OR curr_dist does not exist,
-                    //update current_shortest_distance; update estimated shorted_distance; update previous position;
-                    //and add neib to set for further examination
-                    let new_current_dist = current_dist + added_dist;
-                    let new_estimated_dist =
-                        new_current_dist + get_distance_estimate(&neib_node, &destination);
 
-                    current_shortest_distance.insert(neib_node, new_current_dist);
-                    estimated_shortest_distance.insert(neib_node, new_estimated_dist);
-                    prev_position.insert(neib_node, node);
+                    if let Ok(distance_estimate) = get_distance_estimate(&neib_node, &destination) {
+                        //If our new distance (dist + added_dist) is less than curr_dist OR curr_dist does not exist,
+                        //update current_shortest_distance; update estimated shorted_distance; update previous position;
+                        //and add neib to set for further examination
+                        let new_current_dist = current_dist + added_dist;
+                        let new_estimated_dist = new_current_dist + distance_estimate;
 
-                    if !queued_node_set.contains(&neib_node) {
-                        queued_node_set.insert(neib_node);
-                        node_queue.push(Reverse(NodeDistance {
-                            node: neib_node,
-                            dist: new_estimated_dist,
-                        }))
+                        current_shortest_distance.insert(neib_node, new_current_dist);
+                        estimated_shortest_distance.insert(neib_node, new_estimated_dist);
+                        prev_position.insert(neib_node, node);
+
+                        if !queued_node_set.contains(&neib_node) {
+                            queued_node_set.insert(neib_node);
+                            node_queue.push(Reverse(NodeDistance {
+                                node: neib_node,
+                                dist: new_estimated_dist,
+                            }))
+                        }
                     }
                 });
         }

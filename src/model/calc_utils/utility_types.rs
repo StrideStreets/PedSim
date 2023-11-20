@@ -1,58 +1,98 @@
+use anyhow::{anyhow, Error};
 use krabmaga::engine::location::{Int2D, Real2D};
-use std::{hash::Hash, ops::Sub};
+use num_traits::AsPrimitive;
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+    ops::Sub,
+};
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Num2D<N> {
     pub x: N,
     pub y: N,
 }
+impl<N> Copy for Num2D<N> where N: Copy {}
+impl<N> Display for Num2D<N>
+where
+    N: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.x, self.y)
+    }
+}
 
 pub trait NavigationPoint<N> {
     fn x(&self) -> N;
     fn y(&self) -> N;
-    fn euclidean_distance(&self, other: &Self) -> N;
-    fn manhattan_distance(&self, other: &Self) -> N;
+    fn euclidean_distance(&self, other: &Self) -> Result<N, Error>;
+    fn manhattan_distance(&self, other: &Self) -> Result<N, Error>;
     //fn path_distance(&self, other: Other) -> Option<N>;
     //fn navigable_path(&self, other:Other) -> Option<Vec<Self>>;
 }
 
-impl<N> From<Int2D> for Num2D<N>
+impl<N> std::error::Error for Num2D<N> where N: Debug + Display {}
+
+impl<N> TryFrom<Int2D> for Num2D<N>
 where
-    N: From<i32>,
+    N: TryFrom<i32> + AsPrimitive<i32>,
 {
-    fn from(value: Int2D) -> Self {
-        Num2D {
-            x: value.x.into(),
-            y: value.y.into(),
-        }
+    type Error = anyhow::Error;
+    fn try_from(value: Int2D) -> Result<Self, Self::Error> {
+        Ok(Num2D {
+            x: value
+                .x
+                .try_into()
+                .map_err(|e| anyhow!("Failed to convert i32 into provided numerical type"))?,
+            y: value
+                .y
+                .try_into()
+                .map_err(|e| anyhow!("Failed to convert i32 into provided numerical type"))?,
+        })
     }
 }
 
-impl<N> From<Real2D> for Num2D<N>
+impl<N> TryFrom<Real2D> for Num2D<N>
 where
-    N: From<f32>,
+    N: TryFrom<f32>,
 {
-    fn from(value: Real2D) -> Self {
-        Num2D {
-            x: value.x.into(),
-            y: value.y.into(),
-        }
+    type Error = anyhow::Error;
+    fn try_from(value: Real2D) -> Result<Self, Self::Error> {
+        Ok(Num2D {
+            x: value
+                .x
+                .try_into()
+                .map_err(|e| anyhow!("Failed to convert f32 into provided numerical type"))?,
+            y: value
+                .y
+                .try_into()
+                .map_err(|e| anyhow!("Failed to convert f32 into provided numerical type"))?,
+        })
     }
 }
 
 impl<N> NavigationPoint<N> for Num2D<N>
 where
-    N: Sub<Output = N> + Into<f64> + From<f64>,
+    N: Sub<Output = N> + TryInto<f64> + Copy + 'static,
+    f64: AsPrimitive<N>,
 {
-    fn euclidean_distance(&self, other: &Self) -> N {
-        let dx: f64 = (other.x - self.x).into();
-        let dy: f64 = (other.y - self.y).into();
-        (dx.powf(2.) + dy.powf(2.)).sqrt().round().into()
+    fn euclidean_distance(&self, other: &Self) -> Result<N, Error> {
+        let dx: f64 = (other.x - self.x)
+            .try_into()
+            .map_err(|e| anyhow!("Could not convert dx into f64"))?;
+        let dy: f64 = (other.y - self.y)
+            .try_into()
+            .map_err(|e| anyhow!("Could not convert dy into f64"))?;
+        Ok((dx.powf(2.) + dy.powf(2.)).sqrt().round().as_())
     }
 
-    fn manhattan_distance(&self, other: &Self) -> N {
-        let dx: f64 = (other.x - self.x).into();
-        let dy: f64 = (other.y - self.y).into();
-        (dx.abs() + dy.abs()).into()
+    fn manhattan_distance(&self, other: &Self) -> Result<N, Error> {
+        let dx: f64 = (other.x - self.x)
+            .try_into()
+            .map_err(|e| anyhow!("Could not convert dx into f64"))?;
+        let dy: f64 = (other.y - self.y)
+            .try_into()
+            .map_err(|e| anyhow!("Could not convert dy into f64"))?;
+        Ok((dx.abs() + dy.abs()).as_())
     }
 
     fn x(&self) -> N {
@@ -71,14 +111,16 @@ impl NavigationPoint<i32> for Int2D {
     fn y(&self) -> i32 {
         self.y
     }
-    fn euclidean_distance(&self, other: &Self) -> i32 {
-        ((other.x - self.x).pow(2) as f64 + (other.y - self.y).pow(2) as f64)
-            .sqrt()
-            .round() as i32
+    fn euclidean_distance(&self, other: &Self) -> Result<i32, Error> {
+        Ok(
+            ((other.x - self.x).pow(2) as f64 + (other.y - self.y).pow(2) as f64)
+                .sqrt()
+                .round() as i32,
+        )
     }
 
-    fn manhattan_distance(&self, other: &Self) -> i32 {
-        (self.x - other.x).abs() + (self.y - other.y).abs()
+    fn manhattan_distance(&self, other: &Self) -> Result<i32, Error> {
+        Ok((self.x - other.x).abs() as i32 + (self.y - other.y).abs() as i32)
     }
 }
 
@@ -90,11 +132,11 @@ impl NavigationPoint<f32> for Real2D {
     fn y(&self) -> f32 {
         self.y
     }
-    fn euclidean_distance(&self, other: &Self) -> f32 {
-        ((other.x - self.x).powf(2.) + (other.y - self.y).powf(2.)).sqrt()
+    fn euclidean_distance(&self, other: &Self) -> Result<f32, Error> {
+        Ok(((other.x - self.x).powf(2.) + (other.y - self.y).powf(2.)).sqrt())
     }
 
-    fn manhattan_distance(&self, other: &Self) -> f32 {
-        (self.x - other.x).abs() + (self.y - other.y).abs()
+    fn manhattan_distance(&self, other: &Self) -> Result<f32, Error> {
+        Ok((self.x - other.x).abs() + (self.y - other.y).abs())
     }
 }

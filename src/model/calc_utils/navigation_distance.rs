@@ -1,8 +1,10 @@
 use super::pathfinding::astar;
 use super::utility_types::*;
+use anyhow::{anyhow, Error};
 use krabmaga::engine::fields::sparse_object_grid_2d::SparseGrid2D;
 use krabmaga::engine::location::{Int2D, Real2D};
 use ndarray::Array2;
+use num_traits::AsPrimitive;
 use std::cmp::Eq;
 use std::fmt::Debug;
 use std::format;
@@ -52,9 +54,9 @@ pub fn find_origin_destination_path<T, N>(
     origin: T,
     destination: T,
     grid: &Array2<i8>,
-) -> Option<Vec<T>>
+) -> Result<Vec<T>, Error>
 where
-    T: NavigationPoint<N> + Hash + Eq + Copy + Into<Num2D<N>>,
+    T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>>,
     N: Clone
         + Ord
         + Copy
@@ -62,19 +64,28 @@ where
         + Hash
         + TryFrom<usize>
         + TryInto<usize>
-        + From<f64>
-        + Into<f64>
+        + TryInto<f64>
         + Sub<Output = N>
-        + Add<Output = N>,
+        + Add<Output = N>
+        + 'static,
     <N as TryFrom<usize>>::Error: Debug,
+    f64: AsPrimitive<N>,
 {
     let mut position_queue = Vec::<T>::new();
 
-    astar(origin.into(), destination.into(), grid.clone());
+    let converted_origin = origin
+        .try_into()
+        .map_err(|e| anyhow!("Failed to convert origin point to Num2D"))?;
+
+    let converted_destination = destination
+        .try_into()
+        .map_err(|e| anyhow!("Failed to convert destinations point to Num2D"))?;
+
+    astar(converted_origin, converted_destination, grid.clone());
 
     let mut file = File::create("_LOG.txt").expect("create failed");
     file.write_all(format!("{:#}", grid).as_bytes())
         .expect("write failed");
 
-    None
+    Ok(position_queue)
 }
