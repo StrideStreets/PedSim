@@ -1,15 +1,13 @@
 use enumx::def_impls;
 use krabmaga::engine::location::{Int2D, Real2D};
-use std::hash::{Hash, Hasher};
-#[derive(Clone, Hash, PartialEq, Eq)]
-// pub enum Num2D {
-//     Int2D(Int2D),
-//     Real2D(Real2D),
-// }
-
+use std::{
+    hash::{Hash, Hasher},
+    ops::Sub,
+};
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Num2D<N> {
-    x: N,
-    y: N,
+    pub x: N,
+    pub y: N,
 }
 
 pub trait NavigationPoint<N> {
@@ -21,35 +19,54 @@ pub trait NavigationPoint<N> {
     //fn navigable_path(&self, other:Other) -> Option<Vec<Self>>;
 }
 
-// impl<N> NavigationPoint<N> for Num2D {
-//     fn euclidean_distance(&self, other: &Self) -> N {
-//         match self {
-//             Num2D::Int2D(node) => *node.euclidean_distance(other),
-//             Num2D::Real2D(node) => *node.euclidean_distance(other),
-//         }
-//     }
+impl<N> From<Int2D> for Num2D<N>
+where
+    N: From<i32>,
+{
+    fn from(value: Int2D) -> Self {
+        Num2D {
+            x: value.x.into(),
+            y: value.y.into(),
+        }
+    }
+}
 
-//     fn manhattan_distance(&self, other: &Self) -> N {
-//         match self {
-//             Num2D::Int2D(node) => *node.manhattan_distance(other),
-//             Num2D::Real2D(node) => *node.manhattan_distance(other),
-//         }
-//     }
+impl<N> From<Real2D> for Num2D<N>
+where
+    N: From<f32>,
+{
+    fn from(value: Real2D) -> Self {
+        Num2D {
+            x: value.x.into(),
+            y: value.y.into(),
+        }
+    }
+}
 
-//     fn x(&self) -> N {
-//         match self {
-//             Num2D::Int2D(node) => node.x(),
-//             Num2D::Real2D(node) => node.x(),
-//         }
-//     }
+impl<N> NavigationPoint<N> for Num2D<N>
+where
+    N: Sub<Output = N> + Into<f64> + From<f64>,
+{
+    fn euclidean_distance(&self, other: &Self) -> N {
+        let dx: f64 = (other.x - self.x).into();
+        let dy: f64 = (other.y - self.y).into();
+        (dx.powf(2.) + dy.powf(2.)).sqrt().round().into()
+    }
 
-//     fn y(&self) -> N {
-//         match self {
-//             Num2D::Int2D(node) => node.y(),
-//             Num2D::Real2D(node) => node.y(),
-//         }
-//     }
-// }
+    fn manhattan_distance(&self, other: &Self) -> N {
+        let dx: f64 = (other.x - self.x).into();
+        let dy: f64 = (other.y - self.y).into();
+        (dx.abs() + dy.abs()).into()
+    }
+
+    fn x(&self) -> N {
+        self.y
+    }
+
+    fn y(&self) -> N {
+        self.x
+    }
+}
 impl NavigationPoint<i32> for Int2D {
     fn x(&self) -> i32 {
         self.x

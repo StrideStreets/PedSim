@@ -4,10 +4,12 @@ use krabmaga::engine::fields::sparse_object_grid_2d::SparseGrid2D;
 use krabmaga::engine::location::{Int2D, Real2D};
 use ndarray::Array2;
 use std::cmp::Eq;
+use std::fmt::Debug;
 use std::format;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write;
+use std::ops::Sub;
 
 pub fn normalize_motion_vector(loc: Real2D, dest: Real2D) -> (f32, f32) {
     let initial_vector_magnitude: f32 =
@@ -51,12 +53,22 @@ pub fn find_origin_destination_path<T, N>(
     grid: &Array2<i8>,
 ) -> Option<Vec<T>>
 where
-    T: NavigationPoint<N> + Hash + Eq + Copy,
-    N: Clone + Ord + Copy + Default + TryFrom<usize> + TryInto<usize>,
+    T: NavigationPoint<N> + Hash + Eq + Copy + Into<Num2D<N>>,
+    N: Clone
+        + Ord
+        + Copy
+        + Default
+        + Hash
+        + TryFrom<usize>
+        + TryInto<usize>
+        + From<f64>
+        + Into<f64>
+        + Sub<Output = N>,
+    <N as TryFrom<usize>>::Error: Debug,
 {
     let mut position_queue = Vec::<T>::new();
 
-    astar(origin, destination, grid.clone());
+    astar(origin.into(), destination.into(), grid.clone());
 
     let mut file = File::create("_LOG.txt").expect("create failed");
     file.write_all(format!("{:#}", grid).as_bytes())

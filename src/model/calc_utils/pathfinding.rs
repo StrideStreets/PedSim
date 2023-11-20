@@ -10,11 +10,13 @@ use std::cmp::Ordering;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::Sub;
 
 #[derive(Clone, Debug, Hash)]
 struct NodeDistance<N> {
-    node: Num2D,
+    node: Num2D<N>,
     dist: N,
 }
 
@@ -52,12 +54,25 @@ fn get_additional_distance<T>(current: T, neighbor: T) -> i32 {
     1
 }
 
-pub fn astar<N>(origin: Num2D, destination: Num2D, grid: Array2<i8>) -> Result<Vec<Num2D>, Error>
+pub fn astar<N>(
+    origin: Num2D<N>,
+    destination: Num2D<N>,
+    grid: Array2<i8>,
+) -> Result<Vec<Num2D<N>>, Error>
 where
     //T: NavigationPoint<N> + Hash + Eq + Copy,
-    N: Clone + PartialEq + Copy + Default + TryFrom<usize> + TryInto<usize>,
-    Num2D: Eq + PartialEq + Hash,
+    N: Clone
+        + PartialEq
+        + Copy
+        + Default
+        + TryFrom<usize>
+        + TryInto<usize>
+        + Sub<Output = N>
+        + From<f64>
+        + Into<f64>,
+    Num2D<N>: Eq + PartialEq + Hash,
     NodeDistance<N>: Ord + Eq,
+    <N as TryFrom<usize>>::Error: Debug,
 {
     let x_min: usize = 0;
     let x_max: usize = grid.ncols() - 1;
@@ -106,27 +121,13 @@ where
                 .into_iter()
                 .filter(|(col, row)| grid[[*row, *col]] == 1)
                 .for_each(|(col, row)| {
-                    let node = match origin {
-                        Num2D::Int2D(_) => {
-                            Int2D {
-                                x: col
-                                    .try_into()
-                                    .expect("Grid X coordinate should be convertible into N"),
-                                y: col
-                                    .try_into()
-                                    .expect("Grid Y coordinate should be convertible into N"),
-                            };
-                        }
-                        Num2D::Real2D(_) => {
-                            Real2D {
-                                x: col
-                                    .try_into()
-                                    .expect("Grid X coordinate should be convertible into N"),
-                                y: col
-                                    .try_into()
-                                    .expect("Grid Y coordinate should be convertible into N"),
-                            };
-                        }
+                    let node = Num2D {
+                        x: col
+                            .try_into()
+                            .expect("Grid X coordinate should be convertible into N"),
+                        y: col
+                            .try_into()
+                            .expect("Grid Y coordinate should be convertible into N"),
                     };
 
                     let added_dist = get_additional_distance(node, destination);
