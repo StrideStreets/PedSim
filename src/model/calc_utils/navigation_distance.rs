@@ -1,7 +1,8 @@
 use super::pathfinding::astar;
+use super::utility_types::*;
 use krabmaga::engine::fields::sparse_object_grid_2d::SparseGrid2D;
 use krabmaga::engine::location::{Int2D, Real2D};
-use ndarray::{Array2, ArrayView, Axis};
+use ndarray::Array2;
 use std::cmp::Eq;
 use std::format;
 use std::fs::File;
@@ -14,35 +15,6 @@ pub fn normalize_motion_vector(loc: Real2D, dest: Real2D) -> (f32, f32) {
     let dir_x: f32 = (dest.x - loc.x) / initial_vector_magnitude;
     let dir_y: f32 = (dest.y - loc.y) / initial_vector_magnitude;
     (dir_x, dir_y)
-}
-
-pub trait NavigationPoint<N> {
-    fn euclidean_distance(&self, other: &Self) -> N;
-    fn manhattan_distance(&self, other: &Self) -> N;
-    //fn path_distance(&self, other: Other) -> Option<N>;
-    //fn navigable_path(&self, other:Other) -> Option<Vec<Self>>;
-}
-
-impl NavigationPoint<i32> for Int2D {
-    fn euclidean_distance(&self, other: &Self) -> i32 {
-        ((other.x - self.x).pow(2) as f64 + (other.y - self.y).pow(2) as f64)
-            .sqrt()
-            .round() as i32
-    }
-
-    fn manhattan_distance(&self, other: &Self) -> i32 {
-        (self.x - other.x).abs() + (self.y - other.y).abs()
-    }
-}
-
-impl NavigationPoint<f32> for Real2D {
-    fn euclidean_distance(&self, other: &Self) -> f32 {
-        ((other.x - self.x).powf(2.) + (other.y - self.y).powf(2.)).sqrt()
-    }
-
-    fn manhattan_distance(&self, other: &Self) -> f32 {
-        (self.x - other.x).abs() + (self.y - other.y).abs()
-    }
 }
 
 pub fn make_navigable_matrix<N, O>(grid: &SparseGrid2D<O>) -> Array2<i8>
@@ -80,7 +52,7 @@ pub fn find_origin_destination_path<T, N>(
 ) -> Option<Vec<T>>
 where
     T: NavigationPoint<N> + Hash + Eq + Copy,
-    N: Clone + Ord + Copy + Default + TryFrom<usize>,
+    N: Clone + Ord + Copy + Default + TryFrom<usize> + TryInto<usize>,
 {
     let mut position_queue = Vec::<T>::new();
 
