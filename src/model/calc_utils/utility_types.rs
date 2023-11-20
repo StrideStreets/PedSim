@@ -51,6 +51,15 @@ where
     }
 }
 
+impl From<Num2D<i32>> for Int2D {
+    fn from(value: Num2D<i32>) -> Self {
+        Int2D {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
+
 impl<N> TryFrom<Real2D> for Num2D<N>
 where
     N: TryFrom<f32>,
@@ -70,6 +79,14 @@ where
     }
 }
 
+impl From<Num2D<f32>> for Real2D {
+    fn from(value: Num2D<f32>) -> Self {
+        Real2D {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
 impl<N> NavigationPoint<N> for Num2D<N>
 where
     N: Sub<Output = N> + TryInto<f64> + Copy + 'static,

@@ -115,7 +115,7 @@ impl State for ModelState {
 
             let this_dest = dest.unwrap_or(Real2D { x: 1., y: 1. });
 
-            find_origin_destination_path::<Int2D, i32>(
+            let shortest_path = find_origin_destination_path::<Int2D, i32>(
                 Int2D {
                     x: loc.x as i32,
                     y: loc.y as i32,

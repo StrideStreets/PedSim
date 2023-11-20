@@ -6,6 +6,7 @@ use krabmaga::engine::location::{Int2D, Real2D};
 use ndarray::Array2;
 use num_traits::AsPrimitive;
 use std::cmp::Eq;
+use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::format;
 use std::fs::File;
@@ -54,9 +55,9 @@ pub fn find_origin_destination_path<T, N>(
     origin: T,
     destination: T,
     grid: &Array2<i8>,
-) -> Result<Vec<T>, Error>
+) -> Result<VecDeque<T>, Error>
 where
-    T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>>,
+    T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>> + TryFrom<Num2D<N>>,
     N: Clone
         + Ord
         + Copy
@@ -71,8 +72,6 @@ where
     <N as TryFrom<usize>>::Error: Debug,
     f64: AsPrimitive<N>,
 {
-    let mut position_queue = Vec::<T>::new();
-
     let converted_origin = origin
         .try_into()
         .map_err(|e| anyhow!("Failed to convert origin point to Num2D"))?;
@@ -81,11 +80,20 @@ where
         .try_into()
         .map_err(|e| anyhow!("Failed to convert destinations point to Num2D"))?;
 
-    astar(converted_origin, converted_destination, grid.clone());
-
-    let mut file = File::create("_LOG.txt").expect("create failed");
-    file.write_all(format!("{:#}", grid).as_bytes())
-        .expect("write failed");
-
-    Ok(position_queue)
+    astar(converted_origin, converted_destination, grid.clone()).and_then(|queue| {
+        let converted_path: VecDeque<T> = queue
+            .iter()
+            .filter_map(|node| {
+                (*node)
+                    .try_into()
+                    .map_err(|e| {
+                        anyhow!(
+                    "Failed while converting path from intermediary Num2D to original node format"
+                )
+                    })
+                    .ok()
+            })
+            .collect();
+        Ok(converted_path)
+    })
 }
