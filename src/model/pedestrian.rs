@@ -67,16 +67,32 @@ impl Pedestrian {
 impl Agent for Pedestrian {
     /// Put the code that should happen for each step, for each agent here.
     fn step(&mut self, state: &mut dyn State) {
-        let state = state.as_any().downcast_ref::<ModelState>().unwrap();
-        let mut rng = rand::thread_rng();
+        let state: &mut ModelState = state.as_any_mut().downcast_mut::<ModelState>().unwrap();
+        let new_loc: Real2D;
 
-        if let Some(dest) = self.dest {
-            (self.dir_x, self.dir_y) = normalize_motion_vector(self.loc, dest)
+        match state.ped_paths.get_mut(&self.id) {
+            Some(path_iterator) => {
+                let possible_next_point = path_iterator.next();
+                new_loc = match possible_next_point {
+                    Some(next_point) => next_point,
+                    None => self
+                        .dest
+                        .expect("If you have a path, you will also have a destination"),
+                }
+            }
+            None => {
+                let rng = rand::thread_rng();
+
+                if let Some(dest) = self.dest {
+                    (self.dir_x, self.dir_y) = normalize_motion_vector(self.loc, dest)
+                }
+                let loc_x = self.loc.x + self.dir_x * self.speed;
+                let loc_y = self.loc.y + self.dir_y * self.speed;
+
+                new_loc = Real2D { x: loc_x, y: loc_y };
+            }
         }
-        let loc_x = self.loc.x + self.dir_x * self.speed;
-        let loc_y = self.loc.y + self.dir_y * self.speed;
 
-        let new_loc = Real2D { x: loc_x, y: loc_y };
         self.loc = new_loc;
 
         state.field.set_object_location(*self, new_loc);

@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt::Debug;
+use std::fmt::Display;
 use std::hash::Hash;
 use std::ops::Add;
 use std::ops::Sub;
@@ -20,6 +21,15 @@ use std::ops::Sub;
 pub struct NodeDistance<N> {
     node: Num2D<N>,
     dist: N,
+}
+
+impl<N> Display for NodeDistance<N>
+where
+    N: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "`{{`Node: {},\ndist: {}`}}`", self.node, self.dist)
+    }
 }
 
 impl<N> PartialEq for NodeDistance<N>
@@ -91,6 +101,7 @@ where
         + PartialEq
         + Copy
         + Default
+        + Display
         + TryFrom<usize>
         + TryInto<usize>
         + Sub<Output = N>
@@ -103,6 +114,7 @@ where
     <N as TryFrom<usize>>::Error: Debug,
     f64: AsPrimitive<N>,
 {
+    //println!("Origin: {}\nDestination: {}", origin, destination);
     let x_min: usize = 0;
     let x_max: usize = grid.ncols() - 1;
     let y_min: usize = 0;
@@ -132,6 +144,7 @@ where
             dist: est_dist,
         } = node_dist;
 
+        //println!("Examining node {}", node_dist);
         let current_dist = est_dist - get_distance_estimate(&node, &destination)?;
 
         //Remove node from tracker set...
@@ -165,7 +178,7 @@ where
                         x: col
                             .try_into()
                             .expect("Grid X coordinate should be convertible into N"),
-                        y: col
+                        y: row
                             .try_into()
                             .expect("Grid Y coordinate should be convertible into N"),
                     };

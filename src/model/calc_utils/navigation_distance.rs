@@ -7,7 +7,7 @@ use ndarray::Array2;
 use num_traits::AsPrimitive;
 use std::cmp::Eq;
 use std::collections::VecDeque;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::format;
 use std::fs::File;
 use std::hash::Hash;
@@ -62,6 +62,7 @@ where
         + Ord
         + Copy
         + Default
+        + Display
         + Hash
         + TryFrom<usize>
         + TryInto<usize>

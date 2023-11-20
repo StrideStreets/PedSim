@@ -15,7 +15,7 @@ use {
 #[cfg(any(feature = "visualization", feature = "visualization_wasm"))]
 mod visualization;
 
-pub static DISCRETIZATION: f32 = 10.0 / 10.0;
+pub static DISCRETIZATION: f32 = 10.0 / 1.5;
 pub static TOROIDAL: bool = false;
 
 // Main used when only the simulation should run, without any visualization.
@@ -23,7 +23,7 @@ pub static TOROIDAL: bool = false;
 fn main() {
     let step = 100;
 
-    let num_agents = 20;
+    let num_agents = 500;
     let dim: (f32, f32) = (400., 400.);
 
     let state = ModelState::new(dim, num_agents);
@@ -36,7 +36,7 @@ fn main() {
 fn main() {
     // Initialize the simulation and its visualization here.
 
-    let num_agents = 500;
+    let num_agents = 50;
     let dim: (f32, f32) = (400., 400.);
 
     let state = ModelState::new(dim, num_agents);

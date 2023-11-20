@@ -70,7 +70,7 @@ impl State for ModelState {
 
         //Make a test obstacle
         let mut obstacle_id = 0;
-        for x in ((self.dim.0 / 5.) as i32)..((self.dim.0 / 4.) as i32) {
+        for x in ((self.dim.0 / 4.) as i32)..(3 * (self.dim.0 / 4.) as i32) {
             for y in ((self.dim.1 / 5.) as i32)..((self.dim.1 / 4.) as i32) {
                 let obstacle_location = Int2D { x: x, y: y };
                 self.obj_grid.set_object_location(
@@ -90,6 +90,7 @@ impl State for ModelState {
 
         //Make matrix representation of grid that will be used for pathfinding
         let navigable_object_grid = make_navigable_matrix::<i32, Object>(&self.obj_grid);
+        //println!("Made navigable grid");
 
         //Make agents
         for i in 0..self.num_agents {
@@ -111,16 +112,12 @@ impl State for ModelState {
                 y: self.dim.1 * d2,
             });
 
-            let agent = Pedestrian::new(i, loc, last_d, dest, 1.0);
-            // Put the agent in your state
-            schedule.schedule_repeating(Box::new(agent), 0., 0);
-
             //Pre-compute shortest paths for agents, and place in ped_paths
             // In this case, we should convert vector of Int2D to Real2D, since we will use these
             // values as positions for our agents on a real field
             let this_dest = dest.unwrap_or(Real2D { x: 1., y: 1. });
 
-            if let Ok(shortest_path) = find_origin_destination_path::<Int2D, i32>(
+            match find_origin_destination_path::<Int2D, i32>(
                 Int2D {
                     x: loc.x as i32,
                     y: loc.y as i32,
@@ -132,6 +129,7 @@ impl State for ModelState {
                 &navigable_object_grid,
             )
             .and_then(|node_vec| {
+                //println!("Located path for {}", i);
                 let real_vec: Vec<Real2D> = node_vec
                     .into_iter()
                     .map(|node| Real2D {
@@ -141,9 +139,20 @@ impl State for ModelState {
                     .collect();
                 Ok(real_vec)
             }) {
-                self.ped_paths.insert(i, shortest_path.into_iter());
+                Ok(shortest_path) => {
+                    //println!("Found path for agent {}", i);
+                    self.ped_paths.insert(i, shortest_path.into_iter());
+                }
+                Err(e) => {
+                    //println!("{}", e);
+                }
             }
+
+            let agent = Pedestrian::new(i, loc, last_d, dest, 1.0);
+            // Put the agent in your state
+            schedule.schedule_repeating(Box::new(agent), 0., 0);
         }
+        //println!("{:?}", self.ped_paths);
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
