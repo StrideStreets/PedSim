@@ -1,9 +1,5 @@
-use enumx::def_impls;
 use krabmaga::engine::location::{Int2D, Real2D};
-use std::{
-    hash::{Hash, Hasher},
-    ops::Sub,
-};
+use std::{hash::Hash, ops::Sub};
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Num2D<N> {
     pub x: N,

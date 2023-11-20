@@ -9,6 +9,7 @@ use std::format;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write;
+use std::ops::Add;
 use std::ops::Sub;
 
 pub fn normalize_motion_vector(loc: Real2D, dest: Real2D) -> (f32, f32) {
@@ -63,7 +64,8 @@ where
         + TryInto<usize>
         + From<f64>
         + Into<f64>
-        + Sub<Output = N>,
+        + Sub<Output = N>
+        + Add<Output = N>,
     <N as TryFrom<usize>>::Error: Debug,
 {
     let mut position_queue = Vec::<T>::new();
