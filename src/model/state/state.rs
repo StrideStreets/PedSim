@@ -9,7 +9,7 @@ use crate::model::{
 
 use krabmaga::engine::fields::field::Field;
 use krabmaga::engine::{
-    fields::{field_2d::Field2D, sparse_object_grid_2d::SparseGrid2D},
+    fields::{field_2d::Field2D, sparse_number_grid_2d::SparseNumberGrid2D},
     location::{Int2D, Real2D},
     schedule::Schedule,
     state::State,
@@ -22,7 +22,7 @@ pub struct ModelState {
     pub step: u64,
     pub peds: Vec<Pedestrian>,
     pub field: Field2D<Pedestrian>,
-    pub obj_grid: SparseGrid2D<Object>,
+    pub obj_grid: SparseNumberGrid2D<u8>,
     pub ped_paths: HashMap<u32, std::vec::IntoIter<Real2D>>,
     pub dim: (f32, f32),
     pub num_agents: u32,
@@ -43,7 +43,7 @@ impl ModelState {
             None => {
                 dim = input_dim;
                 obj_grid = make_object_grid(dim, grid);
-                navigable_object_grid = make_navigable_matrix::<i32, Object>(&obj_grid)
+                navigable_object_grid = make_navigable_matrix::<i32, u8>(&obj_grid)
             }
         };
         //Initialize pedestrian records
@@ -66,11 +66,11 @@ impl ModelState {
         }
     }
 
-    pub fn get_obstacle(&self, loc: &Int2D) -> Option<Vec<Object>> {
-        self.obj_grid
-            .get_objects(loc)
-            .filter(|vec| vec.first().unwrap().value == ObjectType::Obstacle)
-    }
+    // pub fn get_obstacle(&self, loc: &Int2D) -> Option<Vec<Object>> {
+    //     self.obj_grid
+    //         .get_value(loc)
+    //         .filter(|vec| vec.first().unwrap().value == ObjectType::Obstacle)
+    //}
 }
 
 impl State for ModelState {

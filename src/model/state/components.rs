@@ -8,7 +8,7 @@ use crate::{DISCRETIZATION, TOROIDAL};
 use itertools::iproduct;
 use krabmaga::{
     engine::{
-        fields::{field::Field, field_2d::Field2D, sparse_object_grid_2d::SparseGrid2D},
+        fields::{field::Field, field_2d::Field2D, sparse_number_grid_2d::SparseNumberGrid2D},
         location::{Int2D, Real2D},
     },
     rand::{self, Rng},
@@ -20,11 +20,9 @@ pub fn make_field(dim: (f32, f32)) -> Field2D<Pedestrian> {
     Field2D::<Pedestrian>::new(dim.0, dim.1, DISCRETIZATION, TOROIDAL)
 }
 
-pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseGrid2D<Object> {
+pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseNumberGrid2D<u8> {
     let (width, height) = (dim.0 as i32, dim.1 as i32);
-    let mut obj_grid = SparseGrid2D::new(width, height);
-
-    let mut obstacle_id = 0;
+    let mut obj_grid = SparseNumberGrid2D::new(width, height);
 
     if let Some(grid) = grid {
         println!("{}", &grid);
@@ -32,20 +30,10 @@ pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseGrid
             match grid[[row as usize, col as usize]] {
                 0 => {
                     //println!("Obstacle at {}, {}", col, row);
-                    let obstacle_location = Int2D { x: col, y: row };
-                    obj_grid.set_object_location(
-                        Object {
-                            id: obstacle_id,
-                            value: ObjectType::Obstacle,
-                            location: obstacle_location,
-                        },
-                        &obstacle_location,
-                    );
-                    obstacle_id += 1;
+                    let location = Int2D { x: col, y: row };
+                    obj_grid.set_value_location(0, &location);
                 }
-                _ => {
-                    //println!("Available space at {}, {}", col, row);
-                }
+                _ => {}
             }
         });
     }
@@ -76,12 +64,12 @@ pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseGrid
 pub fn make_peds(
     num_peds: u32,
     dim: (f32, f32),
-    obj_grid: &SparseGrid2D<Object>,
+    obj_grid: &SparseNumberGrid2D<u8>,
 ) -> Vec<Pedestrian> {
     // Gather list of available positions
 
     let available_positions: Vec<Real2D> = iproduct!(0..obj_grid.width, 0..obj_grid.height)
-        .filter(|(x, y)| obj_grid.get_objects(&Int2D { x: *x, y: *y }).is_none())
+        .filter(|(x, y)| obj_grid.get_value(&Int2D { x: *x, y: *y }).is_none())
         .map(|(x, y)| Real2D {
             x: x as f32,
             y: y as f32,

@@ -1,7 +1,7 @@
 use super::pathfinding::astar;
 use super::utility_types::*;
 use anyhow::{anyhow, Error};
-use krabmaga::engine::fields::sparse_object_grid_2d::SparseGrid2D;
+use krabmaga::engine::fields::sparse_number_grid_2d::SparseNumberGrid2D;
 use krabmaga::engine::location::{Int2D, Real2D};
 use ndarray::Array2;
 use num_traits::AsPrimitive;
@@ -22,10 +22,10 @@ pub fn normalize_motion_vector(loc: Real2D, dest: Real2D) -> (f32, f32) {
     (dir_x, dir_y)
 }
 
-pub fn make_navigable_matrix<N, O>(grid: &SparseGrid2D<O>) -> Array2<u8>
+pub fn make_navigable_matrix<N, T>(grid: &SparseNumberGrid2D<T>) -> Array2<u8>
 where
     N: Clone + PartialEq + Copy + Default + TryFrom<usize>,
-    O: Eq + Hash + Clone + Copy,
+    T: Eq + Hash + Clone + Copy,
 {
     let mut navigable_array = Array2::<u8>::default((grid.height as usize, grid.width as usize));
 
@@ -41,7 +41,7 @@ where
                     .try_into()
                     .expect("Row index should be convertible from usize"),
             };
-            *value_ref = match grid.get_objects(&loc) {
+            *value_ref = match grid.get_value(&loc) {
                 Some(_) => 0_u8,
                 None => 1_u8,
             };

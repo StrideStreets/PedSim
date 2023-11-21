@@ -11,13 +11,14 @@ use krabmaga::bevy::prelude::Commands;
 use krabmaga::bevy::prelude::Component;
 use krabmaga::engine::agent::Agent;
 use krabmaga::engine::fields::dense_object_grid_2d::DenseGrid2D;
+use krabmaga::engine::fields::sparse_number_grid_2d::SparseNumberGrid2D;
 use krabmaga::engine::fields::sparse_object_grid_2d::SparseGrid2D;
 use krabmaga::engine::location::{Int2D, Real2D};
 use krabmaga::engine::schedule::Schedule;
 use krabmaga::engine::state::State;
 use krabmaga::visualization::agent_render::AgentRender;
 use krabmaga::visualization::asset_handle_factory::AssetHandleFactoryResource;
-use krabmaga::visualization::fields::object_grid_2d::RenderObjectGrid2D;
+use krabmaga::visualization::fields::number_grid_2d::BatchRender;
 use krabmaga::visualization::simulation_descriptor::SimulationDescriptor;
 use krabmaga::visualization::visualization_state::VisualizationState;
 
@@ -35,7 +36,7 @@ impl VisualizationState<ModelState> for ModelVis {
         _schedule: &mut Schedule,
         _sim: &mut SimulationDescriptor,
     ) {
-        SparseGrid2D::<Object>::init_graphics_grid(_sprite_render_factory, _commands, _state);
+        Self::render_obstacles(_state, _sprite_render_factory, _commands, _sim);
     }
 
     fn get_agent_render(
@@ -67,40 +68,53 @@ impl VisualizationState<ModelState> for ModelVis {
     }
 }
 
+impl ModelVis {
+    fn render_obstacles(
+        state: &ModelState,
+        sprite_render_factory: &mut AssetHandleFactoryResource,
+        commands: &mut Commands,
+        sim: &mut SimulationDescriptor,
+    ) {
+        state
+            .obj_grid
+            .render(&mut *sprite_render_factory, commands, sim);
+    }
+}
+
 impl Component for Object {
     type Storage = TableStorage;
 }
 
-impl RenderObjectGrid2D<ModelState, Object> for SparseGrid2D<Object> {
-    fn fetch_sparse_grid(state: &ModelState) -> Option<&SparseGrid2D<Object>> {
-        Some(&state.obj_grid)
-    }
+// impl RenderObjectGrid2D<ModelState, Object> for SparseGrid2D<Object> {
+//     fn fetch_sparse_grid(state: &ModelState) -> Option<&SparseGrid2D<Object>> {
+//         Some(&state.obj_grid)
+//     }
 
-    fn fetch_dense_grid(_state: &ModelState) -> Option<&DenseGrid2D<Object>> {
-        None
-    }
+//     fn fetch_dense_grid(_state: &ModelState) -> Option<&DenseGrid2D<Object>> {
+//         None
+//     }
 
-    fn fetch_emoji(_state: &ModelState, obj: &Object) -> String {
-        match obj.value {
-            ObjectType::Path => "house".to_string(),
-            ObjectType::Obstacle => "no_entry_sign".to_string(),
-            //_ => panic!("Object not recognized."),
-        }
-    }
+//     fn fetch_emoji(_state: &ModelState, obj: &Object) -> String {
+//         match obj.value {
+//             ObjectType::Path => "house".to_string(),
+//             ObjectType::Obstacle => "no_entry_sign".to_string(),
+//             //_ => panic!("Object not recognized."),
+//         }
+//     }
 
-    fn fetch_loc(state: &ModelState, obj: &Object) -> Option<Int2D> {
-        state.obj_grid.get_location(*obj)
-    }
+//     fn fetch_loc(state: &ModelState, obj: &Object) -> Option<Int2D> {
+//         state.obj_grid.get_location(*obj)
+//     }
 
-    fn fetch_rotation(_state: &ModelState, _obj: &Object) -> f32 {
-        0.0
-    }
+//     fn fetch_rotation(_state: &ModelState, _obj: &Object) -> f32 {
+//         0.0
+//     }
 
-    fn scale(obj: &Object) -> (f32, f32) {
-        match obj.value {
-            ObjectType::Path => (0.1, 0.1),
-            ObjectType::Obstacle => (0.05, 0.05),
-            //_ => panic!("Object not recognized."),
-        }
-    }
-}
+//     fn scale(obj: &Object) -> (f32, f32) {
+//         match obj.value {
+//             ObjectType::Path => (0.1, 0.1),
+//             ObjectType::Obstacle => (0.05, 0.05),
+//             //_ => panic!("Object not recognized."),
+//         }
+//     }
+// }
