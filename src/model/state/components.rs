@@ -27,9 +27,11 @@ pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseGrid
     let mut obstacle_id = 0;
 
     if let Some(grid) = grid {
+        println!("{}", &grid);
         iproduct!(0..width, 0..height).for_each(|(col, row)| {
             match grid[[row as usize, col as usize]] {
                 0 => {
+                    //println!("Obstacle at {}, {}", col, row);
                     let obstacle_location = Int2D { x: col, y: row };
                     obj_grid.set_object_location(
                         Object {
@@ -41,7 +43,9 @@ pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseGrid
                     );
                     obstacle_id += 1;
                 }
-                _ => {}
+                _ => {
+                    //println!("Available space at {}, {}", col, row);
+                }
             }
         });
     }

@@ -17,7 +17,7 @@ pub fn read_raster(filepath: String) -> Result<Array2<u8>, ImageError> {
                                 binary_pixel_matrix[[row as usize, col as usize]] = 0;
                             }
                             _ => {
-                                binary_pixel_matrix[[row as usize, col as usize]] = 0;
+                                binary_pixel_matrix[[row as usize, col as usize]] = 1;
                             }
                         });
 

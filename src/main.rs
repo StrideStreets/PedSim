@@ -34,11 +34,18 @@ struct Args {
 #[cfg(not(any(feature = "visualization", feature = "visualization_wasm")))]
 fn main() -> Result<(), image::ImageError> {
     let args = Args::parse();
+    let dim: (f32, f32);
 
     let obj_grid = match args.input.is_empty() {
-        true => None,
+        true => {
+            dim = (400., 400.);
+            None
+        }
         false => match read_raster(args.input) {
-            Ok(grid) => Some(grid),
+            Ok(grid) => {
+                dim = (grid.ncols() as f32, grid.nrows() as f32);
+                Some(grid)
+            }
             Err(e) => {
                 return Err(e);
             }
@@ -48,7 +55,6 @@ fn main() -> Result<(), image::ImageError> {
     let step = 100;
 
     let num_agents = 500;
-    let dim: (f32, f32) = (400., 400.);
 
     //let (agents, paths)
 
@@ -63,22 +69,28 @@ fn main() -> Result<(), image::ImageError> {
 #[cfg(any(feature = "visualization", feature = "visualization_wasm"))]
 fn main() -> Result<(), image::ImageError> {
     let args = Args::parse();
+    let dim: (f32, f32);
     // Initialize the simulation and its visualization here.
     let obj_grid = match args.input.is_empty() {
-        true => None,
+        true => {
+            dim = (400., 400.);
+            None
+        }
         false => match read_raster(args.input) {
-            Ok(grid) => Some(grid),
+            Ok(grid) => {
+                dim = (grid.ncols() as f32, grid.nrows() as f32);
+                Some(grid)
+            }
             Err(e) => {
                 return Err(e);
             }
         },
     };
     let num_agents = 50;
-    let dim: (f32, f32) = (400., 400.);
 
     let state = ModelState::new(dim, num_agents, obj_grid);
     Visualization::default()
-        .with_window_dimensions(800., 800.)
+        .with_window_dimensions(1280., 720.)
         .with_simulation_dimensions(dim.0, dim.1)
         .with_background_color(Color::BLUE)
         .with_name("Template")
