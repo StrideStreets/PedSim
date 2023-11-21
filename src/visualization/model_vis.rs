@@ -1,4 +1,4 @@
-use crate::model::state::ModelState;
+use crate::model::state::state::ModelState;
 use crate::model::{
     object::{Object, ObjectType},
     pedestrian::Pedestrian,

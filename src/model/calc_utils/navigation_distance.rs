@@ -22,12 +22,12 @@ pub fn normalize_motion_vector(loc: Real2D, dest: Real2D) -> (f32, f32) {
     (dir_x, dir_y)
 }
 
-pub fn make_navigable_matrix<N, O>(grid: &SparseGrid2D<O>) -> Array2<i8>
+pub fn make_navigable_matrix<N, O>(grid: &SparseGrid2D<O>) -> Array2<u8>
 where
     N: Clone + PartialEq + Copy + Default + TryFrom<usize>,
     O: Eq + Hash + Clone + Copy,
 {
-    let mut navigable_array = Array2::<i8>::default((grid.height as usize, grid.width as usize));
+    let mut navigable_array = Array2::<u8>::default((grid.height as usize, grid.width as usize));
 
     //GET RID OF THESE EXPECTS WITH PROPER ERROR HANDLING
     navigable_array
@@ -42,8 +42,8 @@ where
                     .expect("Row index should be convertible from usize"),
             };
             *value_ref = match grid.get_objects(&loc) {
-                Some(_) => 0_i8,
-                None => 1_i8,
+                Some(_) => 0_u8,
+                None => 1_u8,
             };
         });
 
@@ -53,7 +53,7 @@ where
 pub fn find_origin_destination_path<T, N>(
     origin: T,
     destination: T,
-    grid: &Array2<i8>,
+    grid: &Array2<u8>,
 ) -> Result<Vec<T>, Error>
 where
     T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>> + TryFrom<Num2D<N>>,

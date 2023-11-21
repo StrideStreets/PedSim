@@ -1,4 +1,4 @@
-use crate::model::{pedestrian::Pedestrian, state::ModelState};
+use crate::model::{pedestrian::Pedestrian, state::state::ModelState};
 use krabmaga::bevy::ecs as bevy_ecs;
 use krabmaga::bevy::prelude::{Component, Quat, Transform, Visibility};
 use krabmaga::{

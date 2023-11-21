@@ -1,14 +1,14 @@
-use crate::model::{calc_utils::navigation_distance::normalize_motion_vector, state::ModelState};
+use crate::model::{
+    calc_utils::navigation_distance::normalize_motion_vector, state::state::ModelState,
+};
 use core::fmt;
 use krabmaga::engine::agent::Agent;
-use krabmaga::engine::fields::field_2d::{Location2D};
+use krabmaga::engine::fields::field_2d::Location2D;
 use krabmaga::engine::location::Real2D;
 use krabmaga::engine::state::State;
 use krabmaga::rand;
 
 use std::hash::{Hash, Hasher};
-
-
 
 /// The most basic agent should implement Clone, Copy and Agent to be able to be inserted in a Schedule.
 #[derive(Clone, Copy)]

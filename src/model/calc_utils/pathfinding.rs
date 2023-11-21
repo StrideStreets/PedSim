@@ -93,7 +93,7 @@ where
 pub fn astar<N>(
     origin: Num2D<N>,
     destination: Num2D<N>,
-    grid: Array2<i8>,
+    grid: Array2<u8>,
 ) -> Result<VecDeque<Num2D<N>>, Error>
 where
     //T: NavigationPoint<N> + Hash + Eq + Copy,
