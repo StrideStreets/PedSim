@@ -9,7 +9,7 @@ pub fn read_raster(filepath: String) -> Result<Array2<u8>, ImageError> {
                 Ok(img) => {
                     let (width, height) = (img.width(), img.height());
                     let mut binary_pixel_matrix =
-                        Array2::<u8>::default((width as usize, height as usize));
+                        Array2::<u8>::default((height as usize, width as usize));
                     img.into_luma8()
                         .enumerate_pixels()
                         .for_each(|(col, row, p)| match p {

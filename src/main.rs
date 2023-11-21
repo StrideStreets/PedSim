@@ -54,7 +54,7 @@ fn main() -> Result<(), image::ImageError> {
 
     let step = 100;
 
-    let num_agents = 500;
+    let num_agents = 2;
 
     //let (agents, paths)
 

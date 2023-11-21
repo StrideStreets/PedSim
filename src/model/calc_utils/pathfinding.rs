@@ -170,10 +170,14 @@ where
                 neighbors.push((u_x, u_y + 1));
             }
 
-            neighbors
-                .into_iter()
-                .filter(|(col, row)| grid[[*row, *col]] == 1)
-                .for_each(|(col, row)| {
+            let neighboring_values: Vec<u8> = neighbors
+                .iter()
+                .map(|(col, row)| grid[[*row, *col]])
+                .collect();
+            //println!("{:?}", neighboring_values);
+            println!("{}", grid[[u_y, u_x]]);
+            for (col, row) in neighbors {
+                if grid[[row, col]] == 1 {
                     let neib_node = Num2D {
                         x: col
                             .try_into()
@@ -186,7 +190,7 @@ where
                     let added_dist: N = get_additional_distance(neib_node, destination).as_();
                     if let Some(curr_dist) = current_shortest_distance.get(&neib_node) {
                         if *curr_dist <= current_dist + added_dist {
-                            return;
+                            continue;
                         }
                     }
 
@@ -201,15 +205,19 @@ where
                         estimated_shortest_distance.insert(neib_node, new_estimated_dist);
                         prev_position.insert(neib_node, node);
 
-                        if !queued_node_set.contains(&neib_node) {
-                            queued_node_set.insert(neib_node);
+                        if queued_node_set.insert(neib_node) {
                             node_queue.push(Reverse(NodeDistance {
                                 node: neib_node,
                                 dist: new_estimated_dist,
                             }))
                         }
+                    } else {
+                        println!("Failed to calculate distance estimate")
                     }
-                });
+                }
+            }
+        } else {
+            println!("Failed to properly convert coordinates")
         }
     }
     Err(anyhow!(

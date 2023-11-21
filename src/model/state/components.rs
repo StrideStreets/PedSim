@@ -25,7 +25,7 @@ pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseNumb
     let mut obj_grid = SparseNumberGrid2D::new(width, height);
 
     if let Some(grid) = grid {
-        println!("{}", &grid);
+        //println!("{}", &grid);
         iproduct!(0..width, 0..height).for_each(|(col, row)| {
             match grid[[row as usize, col as usize]] {
                 0 => {
@@ -57,7 +57,7 @@ pub fn make_object_grid(dim: (f32, f32), grid: Option<Array2<u8>>) -> SparseNumb
     // }
 
     obj_grid.update();
-
+    //println!("{:#}", obj_grid.get_empty_bags().len());
     obj_grid
 }
 
@@ -75,6 +75,12 @@ pub fn make_peds(
             y: y as f32,
         })
         .collect();
+
+    println!(
+        "{} Available Starting Positions and Destinations out of {} total positions",
+        available_positions.len(),
+        (dim.1 * dim.0)
+    );
 
     let mut pedestrians = Vec::<Pedestrian>::new();
     let mut rng = rand::thread_rng();
@@ -98,7 +104,7 @@ pub fn make_paths(
     navigable_object_grid: &Array2<u8>,
 ) -> HashMap<u32, std::vec::IntoIter<Real2D>> {
     let mut ped_path_map = HashMap::<u32, std::vec::IntoIter<Real2D>>::new();
-
+    let mut failed_path_ids = Vec::<u32>::new();
     for ped in pedestrians {
         let Pedestrian { id, loc, dest, .. } = ped;
 
@@ -129,12 +135,13 @@ pub fn make_paths(
                     //println!("Found path for agent {}", i);
                     ped_path_map.insert(*id, shortest_path.into_iter());
                 }
-                Err(_e) => {
-                    //println!("{}", e);
+                Err(e) => {
+                    failed_path_ids.push(*id);
+                    println!("{}", e);
                 }
             }
         }
     }
-
+    println!("{} Failed Path Calculations", failed_path_ids.len());
     ped_path_map
 }

@@ -78,7 +78,7 @@ where
 
     let converted_destination = destination
         .try_into()
-        .map_err(|_e| anyhow!("Failed to convert destinations point to Num2D"))?;
+        .map_err(|_e| anyhow!("Failed to convert destination point to Num2D"))?;
 
     astar(converted_origin, converted_destination, grid.clone()).map(|queue| {
         let converted_path: Vec<T> = queue

@@ -29,19 +29,16 @@ pub struct ModelState {
 }
 
 impl ModelState {
-    pub fn new(input_dim: (f32, f32), num_agents: u32, grid: Option<Array2<u8>>) -> ModelState {
-        let dim;
+    pub fn new(dim: (f32, f32), num_agents: u32, grid: Option<Array2<u8>>) -> ModelState {
         let obj_grid;
         let navigable_object_grid;
         //Make object grid
         match grid {
             Some(ngrid) => {
-                navigable_object_grid = ngrid.clone();
-                dim = (ngrid.ncols() as f32, ngrid.nrows() as f32);
-                obj_grid = make_object_grid(dim, Some(ngrid));
+                obj_grid = make_object_grid(dim, Some(ngrid.clone()));
+                navigable_object_grid = ngrid;
             }
             None => {
-                dim = input_dim;
                 obj_grid = make_object_grid(dim, grid);
                 navigable_object_grid = make_navigable_matrix::<i32, u8>(&obj_grid)
             }
