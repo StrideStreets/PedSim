@@ -32,14 +32,6 @@ where
         (self.x == other.x) && (self.y == other.y)
     }
 }
-pub trait NavigationPoint<N> {
-    fn x(&self) -> N;
-    fn y(&self) -> N;
-    fn euclidean_distance(&self, other: &Self) -> Result<N, Error>;
-    fn manhattan_distance(&self, other: &Self) -> Result<N, Error>;
-    //fn path_distance(&self, other: Other) -> Option<N>;
-    //fn navigable_path(&self, other:Other) -> Option<Vec<Self>>;
-}
 
 impl<N> std::error::Error for Num2D<N> where N: Debug + Display {}
 
@@ -96,75 +88,5 @@ impl From<Num2D<f32>> for Real2D {
             x: value.x,
             y: value.y,
         }
-    }
-}
-impl<N> NavigationPoint<N> for Num2D<N>
-where
-    N: Sub<Output = N> + TryInto<f64> + Copy + 'static,
-    f64: AsPrimitive<N>,
-{
-    fn euclidean_distance(&self, other: &Self) -> Result<N, Error> {
-        let dx: f64 = (other.x - self.x)
-            .try_into()
-            .map_err(|_e| anyhow!("Could not convert dx into f64"))?;
-        let dy: f64 = (other.y - self.y)
-            .try_into()
-            .map_err(|_e| anyhow!("Could not convert dy into f64"))?;
-        Ok((dx.powf(2.) + dy.powf(2.)).sqrt().round().as_())
-    }
-
-    fn manhattan_distance(&self, other: &Self) -> Result<N, Error> {
-        let dx: f64 = (other.x - self.x)
-            .try_into()
-            .map_err(|_e| anyhow!("Could not convert dx into f64"))?;
-        let dy: f64 = (other.y - self.y)
-            .try_into()
-            .map_err(|_e| anyhow!("Could not convert dy into f64"))?;
-        Ok((dx.abs() + dy.abs()).as_())
-    }
-
-    fn x(&self) -> N {
-        self.y
-    }
-
-    fn y(&self) -> N {
-        self.x
-    }
-}
-impl NavigationPoint<i32> for Int2D {
-    fn x(&self) -> i32 {
-        self.x
-    }
-
-    fn y(&self) -> i32 {
-        self.y
-    }
-    fn euclidean_distance(&self, other: &Self) -> Result<i32, Error> {
-        Ok(
-            ((other.x - self.x).pow(2) as f64 + (other.y - self.y).pow(2) as f64)
-                .sqrt()
-                .round() as i32,
-        )
-    }
-
-    fn manhattan_distance(&self, other: &Self) -> Result<i32, Error> {
-        Ok((self.x - other.x).abs() + (self.y - other.y).abs())
-    }
-}
-
-impl NavigationPoint<f32> for Real2D {
-    fn x(&self) -> f32 {
-        self.x
-    }
-
-    fn y(&self) -> f32 {
-        self.y
-    }
-    fn euclidean_distance(&self, other: &Self) -> Result<f32, Error> {
-        Ok(((other.x - self.x).powf(2.) + (other.y - self.y).powf(2.)).sqrt())
-    }
-
-    fn manhattan_distance(&self, other: &Self) -> Result<f32, Error> {
-        Ok((self.x - other.x).abs() + (self.y - other.y).abs())
     }
 }

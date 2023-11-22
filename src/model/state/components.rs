@@ -1,5 +1,6 @@
 use crate::model::{
-    calc_utils::navigation_distance::find_origin_destination_path,
+    calc_utils::navigation_distance::*,
+    calc_utils::navigation_point::*,
     object::{Object, ObjectType},
     pedestrian::Pedestrian,
 };
@@ -105,35 +106,35 @@ pub fn make_paths(
 ) -> HashMap<u32, std::vec::IntoIter<Real2D>> {
     let mut ped_path_map = HashMap::<u32, std::vec::IntoIter<Real2D>>::new();
     let mut failed_path_ids = Vec::<u32>::new();
+
     for ped in pedestrians {
         let Pedestrian { id, loc, dest, .. } = ped;
 
         if let Some(this_dest) = dest {
-            match find_origin_destination_path(
-                Int2D {
-                    x: loc.x as i32,
-                    y: loc.y as i32,
-                },
-                Int2D {
-                    x: this_dest.x as i32,
-                    y: this_dest.y as i32,
-                },
-                obj_grid,
-            )
-            .map(|node_vec| {
-                //println!("Located path for {}", i);
-                let real_vec: Vec<Real2D> = node_vec
-                    .into_iter()
-                    .map(|node| Real2D {
-                        x: node.x as f32,
-                        y: node.y as f32,
-                    })
-                    .collect();
-                real_vec
-            }) {
+            let possible_path =
+                NavigationPoint::<i32, Int2D, SparseNumberGrid2D<u8>>::path_to_destination(
+                    &Int2D {
+                        x: loc.x as i32,
+                        y: loc.y as i32,
+                    },
+                    &Int2D {
+                        x: this_dest.x as i32,
+                        y: this_dest.y as i32,
+                    },
+                    obj_grid,
+                );
+
+            match possible_path {
                 Ok(shortest_path) => {
-                    //println!("Found path for agent {}", i);
-                    ped_path_map.insert(*id, shortest_path.into_iter());
+                    let real_vec: Vec<Real2D> = shortest_path
+                        .into_iter()
+                        .map(|node| Real2D {
+                            x: node.x as f32,
+                            y: node.y as f32,
+                        })
+                        .collect();
+
+                    ped_path_map.insert(*id, real_vec.into_iter());
                 }
                 Err(e) => {
                     failed_path_ids.push(*id);

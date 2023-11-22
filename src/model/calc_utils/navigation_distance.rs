@@ -1,4 +1,3 @@
-use super::pathfinding::astar;
 use super::utility_types::*;
 use anyhow::{anyhow, Error};
 use krabmaga::engine::fields::sparse_number_grid_2d::SparseNumberGrid2D;
@@ -98,14 +97,3 @@ where
 //         converted_path
 //     })
 // }
-
-pub fn find_origin_destination_path(
-    origin: Int2D,
-    destination: Int2D,
-    obj_grid: &SparseNumberGrid2D<u8>,
-) -> Result<Vec<Int2D>, Error> {
-    astar(origin, destination, obj_grid).map(|queue| {
-        let converted_path: Vec<Int2D> = queue.iter().map(|i| *i).collect();
-        converted_path
-    })
-}
