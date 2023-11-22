@@ -50,50 +50,62 @@ where
     navigable_array
 }
 
-pub fn find_origin_destination_path<T, N>(
-    origin: T,
-    destination: T,
-    grid: &Array2<u8>,
-) -> Result<Vec<T>, Error>
-where
-    T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>> + TryFrom<Num2D<N>>,
-    N: Clone
-        + Ord
-        + Copy
-        + Default
-        + Display
-        + Hash
-        + TryFrom<usize>
-        + TryInto<usize>
-        + TryInto<f64>
-        + Sub<Output = N>
-        + Add<Output = N>
-        + 'static,
-    <N as TryFrom<usize>>::Error: Debug,
-    f64: AsPrimitive<N>,
-{
-    let converted_origin = origin
-        .try_into()
-        .map_err(|_e| anyhow!("Failed to convert origin point to Num2D"))?;
+// pub fn find_origin_destination_path<T, N>(
+//     origin: T,
+//     destination: T,
+//     obj_grid: &SparseNumberGrid2D<u8>,
+// ) -> Result<Vec<T>, Error>
+// where
+//     T: NavigationPoint<N> + Hash + Eq + Copy + TryInto<Num2D<N>> + TryFrom<Num2D<N>>,
+//     N: Clone
+//         + Ord
+//         + Copy
+//         + Default
+//         + Display
+//         + Hash
+//         + TryFrom<usize>
+//         + TryInto<usize>
+//         + TryInto<f64>
+//         + Sub<Output = N>
+//         + Add<Output = N>
+//         + 'static,
+//     <N as TryFrom<usize>>::Error: Debug,
+//     f64: AsPrimitive<N>,
+//     i32: AsPrimitive<N>,
+// {
+//     let converted_origin = origin
+//         .try_into()
+//         .map_err(|_e| anyhow!("Failed to convert origin point to Num2D"))?;
 
-    let converted_destination = destination
-        .try_into()
-        .map_err(|_e| anyhow!("Failed to convert destination point to Num2D"))?;
+//     let converted_destination = destination
+//         .try_into()
+//         .map_err(|_e| anyhow!("Failed to convert destination point to Num2D"))?;
 
-    astar(converted_origin, converted_destination, grid.clone()).map(|queue| {
-        let converted_path: Vec<T> = queue
-            .iter()
-            .filter_map(|node| {
-                (*node)
-                    .try_into()
-                    .map_err(|_e| {
-                        anyhow!(
-                    "Failed while converting path from intermediary Num2D to original node format"
-                )
-                    })
-                    .ok()
-            })
-            .collect();
+//     astar(origin, destination, obj_grid).map(|queue| {
+//         let converted_path: Vec<T> = queue
+//             .iter()
+//             .filter_map(|node| {
+//                 (*node)
+//                     .try_into()
+//                     .map_err(|_e| {
+//                         anyhow!(
+//                     "Failed while converting path from intermediary Num2D to original node format"
+//                 )
+//                     })
+//                     .ok()
+//             })
+//             .collect();
+//         converted_path
+//     })
+// }
+
+pub fn find_origin_destination_path(
+    origin: Int2D,
+    destination: Int2D,
+    obj_grid: &SparseNumberGrid2D<u8>,
+) -> Result<Vec<Int2D>, Error> {
+    astar(origin, destination, obj_grid).map(|queue| {
+        let converted_path: Vec<Int2D> = queue.iter().map(|i| *i).collect();
         converted_path
     })
 }

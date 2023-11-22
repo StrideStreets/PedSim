@@ -2,6 +2,8 @@ use super::utility_types::NavigationPoint;
 use super::utility_types::Num2D;
 use anyhow::anyhow;
 use anyhow::Error;
+use krabmaga::engine::fields::sparse_number_grid_2d::SparseNumberGrid2D;
+use krabmaga::engine::location::Int2D;
 use ndarray::Array2;
 use num_traits::AsPrimitive;
 use std::cmp::Eq;
@@ -17,72 +19,118 @@ use std::hash::Hash;
 use std::ops::Add;
 use std::ops::Sub;
 
-#[derive(Clone, Debug, Hash)]
-pub struct NodeDistance<N> {
-    node: Num2D<N>,
-    dist: N,
+#[derive(Clone, Hash)]
+// pub struct NodeDistance<N> {
+//     node: Num2D<N>,
+//     dist: N,
+// }
+
+pub struct NodeDistance {
+    node: Int2D,
+    dist: i32,
 }
 
-impl<N> Display for NodeDistance<N>
-where
-    N: Display,
-{
+// impl<N> Display for NodeDistance<N>
+// where
+//     N: Display,
+// {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "`{{`Node: {},\ndist: {}`}}`", self.node, self.dist)
+//     }
+// }
+
+impl Display for NodeDistance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "`{{`Node: {},\ndist: {}`}}`", self.node, self.dist)
     }
 }
 
-impl<N> PartialEq for NodeDistance<N>
-where
-    N: PartialEq,
-{
+// impl<N> PartialEq for NodeDistance<N>
+// where
+//     N: PartialEq,
+// {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.dist == other.dist
+//     }
+// }
+
+impl PartialEq for NodeDistance {
     fn eq(&self, other: &Self) -> bool {
         self.dist == other.dist
     }
 }
 
-impl<N> Eq for NodeDistance<N> where N: Eq {}
+//impl<N> Eq for NodeDistance<N> where N: Eq {}
 
-impl<N> PartialOrd for NodeDistance<N>
-where
-    N: PartialOrd,
-{
+impl Eq for NodeDistance {}
+
+// impl<N> PartialOrd for NodeDistance<N>
+// where
+//     N: PartialOrd,
+// {
+//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+//         self.dist.partial_cmp(&other.dist)
+//     }
+// }
+
+impl PartialOrd for NodeDistance {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.dist.partial_cmp(&other.dist)
     }
 }
 
-impl<N> Ord for NodeDistance<N>
-where
-    N: Ord + Eq,
-{
+// impl<N> Ord for NodeDistance<N>
+// where
+//     N: Ord + Eq,
+// {
+//     fn cmp(&self, other: &Self) -> Ordering {
+//         self.dist.cmp(&other.dist)
+//     }
+// }
+
+impl Ord for NodeDistance {
     fn cmp(&self, other: &Self) -> Ordering {
         self.dist.cmp(&other.dist)
     }
 }
 
 //TO BE EDITED WHEN SWITCHING TO GRAPH REPRESENTATION
-fn get_additional_distance<T>(_current: T, _neighbor: T) -> f64 {
-    1.
+fn get_additional_distance(_current: Int2D, _neighbor: Int2D) -> i32 {
+    1
 }
 
-fn get_distance_estimate<N>(current: &Num2D<N>, dest: &Num2D<N>) -> Result<N, Error>
-where
-    N: Sub<Output = N> + TryInto<f64> + Copy + 'static,
-    f64: AsPrimitive<N>,
-{
+// fn get_distance_estimate<N>(current: &Num2D<N>, dest: &Num2D<N>) -> Result<N, Error>
+// where
+//     N: Sub<Output = N> + TryInto<f64> + Copy + 'static,
+//     f64: AsPrimitive<N>,
+// {
+//     current.manhattan_distance(dest)
+// }
+
+fn get_distance_estimate(current: &Int2D, dest: &Int2D) -> Result<i32, Error> {
     current.manhattan_distance(dest)
 }
 
-fn reconstruct_path<N>(
-    node: &Num2D<N>,
-    prev_position_map: &HashMap<Num2D<N>, Num2D<N>>,
-) -> VecDeque<Num2D<N>>
-where
-    Num2D<N>: Hash + PartialEq + Eq + Copy,
-{
+// fn reconstruct_path<N>(
+//     node: &Num2D<N>,
+//     prev_position_map: &HashMap<Num2D<N>, Num2D<N>>,
+// ) -> VecDeque<Num2D<N>>
+// where
+//     Num2D<N>: Hash + PartialEq + Eq + Copy,
+// {
+//     let mut current_node = node;
+//     let mut path = VecDeque::<Num2D<N>>::new();
+//     while let Some(prev_node) = prev_position_map.get(current_node) {
+//         path.push_front(*prev_node);
+//         current_node = prev_node;
+//     }
+
+//     path
+// }
+
+fn reconstruct_path(node: &Int2D, prev_position_map: &HashMap<Int2D, Int2D>) -> VecDeque<Int2D> {
     let mut current_node = node;
-    let mut path = VecDeque::<Num2D<N>>::new();
+    let mut path = VecDeque::<Int2D>::new();
     while let Some(prev_node) = prev_position_map.get(current_node) {
         path.push_front(*prev_node);
         current_node = prev_node;
@@ -90,43 +138,23 @@ where
 
     path
 }
-pub fn astar<N>(
-    origin: Num2D<N>,
-    destination: Num2D<N>,
-    grid: Array2<u8>,
-) -> Result<VecDeque<Num2D<N>>, Error>
-where
-    //T: NavigationPoint<N> + Hash + Eq + Copy,
-    N: Clone
-        + PartialEq
-        + Copy
-        + Default
-        + Display
-        + TryFrom<usize>
-        + TryInto<usize>
-        + Sub<Output = N>
-        + Add<Output = N>
-        + TryInto<f64>
-        + PartialOrd
-        + 'static,
-    Num2D<N>: Eq + PartialEq + Hash,
-    NodeDistance<N>: Ord + Eq,
-    <N as TryFrom<usize>>::Error: Debug,
-    f64: AsPrimitive<N>,
-{
-    //println!("Origin: {}\nDestination: {}", origin, destination);
-    let _x_min: usize = 0;
-    let x_max: usize = grid.ncols() - 1;
-    let _y_min: usize = 0;
-    let y_max: usize = grid.nrows() - 1;
+pub fn astar(
+    origin: Int2D,
+    destination: Int2D,
+    grid: &SparseNumberGrid2D<u8>,
+) -> Result<VecDeque<Int2D>, Error> {
+    let x_min = 0;
+    let x_max = grid.width - 1;
+    let y_min = 0;
+    let y_max = grid.height - 1;
 
     //Priority queue for examining nodes
-    let mut node_queue = BinaryHeap::<Reverse<NodeDistance<N>>>::new();
+    let mut node_queue = BinaryHeap::<Reverse<NodeDistance>>::new();
     //Set to keep track of elements in open_set more efficiently
-    let mut queued_node_set = HashSet::<Num2D<N>>::new();
-    let mut prev_position = HashMap::<Num2D<N>, Num2D<N>>::new();
-    let mut current_shortest_distance = HashMap::<Num2D<N>, N>::new();
-    let mut estimated_shortest_distance = HashMap::<Num2D<N>, N>::new();
+    let mut queued_node_set = HashSet::<Int2D>::new();
+    let mut prev_position = HashMap::<Int2D, Int2D>::new();
+    let mut current_shortest_distance = HashMap::<Int2D, i32>::new();
+    let mut estimated_shortest_distance = HashMap::<Int2D, i32>::new();
 
     //Add to priority queue an item holding the node and its distance estimate
     node_queue.push(Reverse(NodeDistance {
@@ -134,7 +162,7 @@ where
         dist: get_distance_estimate(&origin, &destination)?,
     }));
 
-    current_shortest_distance.insert(origin, N::default());
+    current_shortest_distance.insert(origin, 0);
 
     estimated_shortest_distance.insert(origin, origin.manhattan_distance(&destination)?);
 
@@ -154,70 +182,63 @@ where
             return Ok(reconstruct_path(&node, &prev_position));
         }
 
-        if let (Ok(u_x), Ok(u_y)) = (node.x().try_into(), node.y().try_into()) {
-            let mut neighbors = Vec::<(usize, usize)>::new();
-            //For now, only considering four-directional moves
-            if u_x != 0 {
-                neighbors.push((u_x - 1, u_y));
-            }
-            if u_x != x_max {
-                neighbors.push((u_x + 1, u_y));
-            }
-            if u_y != 0 {
-                neighbors.push((u_x, u_y - 1));
-            }
-            if u_y != y_max {
-                neighbors.push((u_x, u_y + 1));
-            }
+        let mut neighbors = Vec::<Int2D>::new();
+        //For now, only considering four-directional moves
+        if node.x != x_min {
+            neighbors.push(Int2D {
+                x: node.x - 1,
+                y: node.y,
+            });
+        }
+        if node.x != x_max {
+            neighbors.push(Int2D {
+                x: node.x + 1,
+                y: node.y,
+            });
+        }
+        if node.y != y_min {
+            neighbors.push(Int2D {
+                x: node.x,
+                y: node.y - 1,
+            });
+        }
+        if node.y != y_max {
+            neighbors.push(Int2D {
+                x: node.x,
+                y: node.y + 1,
+            });
+        }
 
-            let neighboring_values: Vec<u8> = neighbors
-                .iter()
-                .map(|(col, row)| grid[[*row, *col]])
-                .collect();
-            //println!("{:?}", neighboring_values);
-            println!("{}", grid[[u_y, u_x]]);
-            for (col, row) in neighbors {
-                if grid[[row, col]] == 1 {
-                    let neib_node = Num2D {
-                        x: col
-                            .try_into()
-                            .expect("Grid X coordinate should be convertible into N"),
-                        y: row
-                            .try_into()
-                            .expect("Grid Y coordinate should be convertible into N"),
-                    };
-
-                    let added_dist: N = get_additional_distance(neib_node, destination).as_();
-                    if let Some(curr_dist) = current_shortest_distance.get(&neib_node) {
-                        if *curr_dist <= current_dist + added_dist {
-                            continue;
-                        }
-                    }
-
-                    if let Ok(distance_estimate) = get_distance_estimate(&neib_node, &destination) {
-                        //If our new distance (dist + added_dist) is less than curr_dist OR curr_dist does not exist,
-                        //update current_shortest_distance; update estimated shorted_distance; update previous position;
-                        //and add neib to set for further examination
-                        let new_current_dist = current_dist + added_dist;
-                        let new_estimated_dist = new_current_dist + distance_estimate;
-
-                        current_shortest_distance.insert(neib_node, new_current_dist);
-                        estimated_shortest_distance.insert(neib_node, new_estimated_dist);
-                        prev_position.insert(neib_node, node);
-
-                        if queued_node_set.insert(neib_node) {
-                            node_queue.push(Reverse(NodeDistance {
-                                node: neib_node,
-                                dist: new_estimated_dist,
-                            }))
-                        }
-                    } else {
-                        println!("Failed to calculate distance estimate")
+        for neib_node in neighbors {
+            if grid.get_value(&neib_node).is_none() {
+                let added_dist = get_additional_distance(neib_node, destination);
+                if let Some(curr_dist) = current_shortest_distance.get(&neib_node) {
+                    if *curr_dist <= current_dist + added_dist {
+                        continue;
                     }
                 }
+
+                if let Ok(distance_estimate) = get_distance_estimate(&neib_node, &destination) {
+                    //If our new distance (dist + added_dist) is less than curr_dist OR curr_dist does not exist,
+                    //update current_shortest_distance; update estimated shorted_distance; update previous position;
+                    //and add neib to set for further examination
+                    let new_current_dist = current_dist + added_dist;
+                    let new_estimated_dist = new_current_dist + distance_estimate;
+
+                    current_shortest_distance.insert(neib_node, new_current_dist);
+                    estimated_shortest_distance.insert(neib_node, new_estimated_dist);
+                    prev_position.insert(neib_node, node);
+
+                    if queued_node_set.insert(neib_node.clone()) {
+                        node_queue.push(Reverse(NodeDistance {
+                            node: neib_node.clone(),
+                            dist: new_estimated_dist,
+                        }))
+                    }
+                } else {
+                    println!("Failed to calculate distance estimate")
+                }
             }
-        } else {
-            println!("Failed to properly convert coordinates")
         }
     }
     Err(anyhow!(

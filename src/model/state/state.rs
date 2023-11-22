@@ -31,16 +31,16 @@ pub struct ModelState {
 impl ModelState {
     pub fn new(dim: (f32, f32), num_agents: u32, grid: Option<Array2<u8>>) -> ModelState {
         let obj_grid;
-        let navigable_object_grid;
+        //let navigable_object_grid;
         //Make object grid
         match grid {
             Some(ngrid) => {
                 obj_grid = make_object_grid(dim, Some(ngrid.clone()));
-                navigable_object_grid = ngrid;
+                //navigable_object_grid = ngrid;
             }
             None => {
                 obj_grid = make_object_grid(dim, grid);
-                navigable_object_grid = make_navigable_matrix::<i32, u8>(&obj_grid)
+                //navigable_object_grid = make_navigable_matrix::<i32, u8>(&obj_grid)
             }
         };
         //Initialize pedestrian records
@@ -50,7 +50,7 @@ impl ModelState {
         let field = make_field(dim);
 
         //Calculate paths, given pedestrians
-        let ped_paths = make_paths(&peds, &navigable_object_grid);
+        let ped_paths = make_paths(&peds, &obj_grid);
 
         ModelState {
             step: 0,

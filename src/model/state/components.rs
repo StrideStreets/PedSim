@@ -101,7 +101,7 @@ pub fn make_peds(
 // values as positions for our agents on a real field
 pub fn make_paths(
     pedestrians: &Vec<Pedestrian>,
-    navigable_object_grid: &Array2<u8>,
+    obj_grid: &SparseNumberGrid2D<u8>,
 ) -> HashMap<u32, std::vec::IntoIter<Real2D>> {
     let mut ped_path_map = HashMap::<u32, std::vec::IntoIter<Real2D>>::new();
     let mut failed_path_ids = Vec::<u32>::new();
@@ -109,7 +109,7 @@ pub fn make_paths(
         let Pedestrian { id, loc, dest, .. } = ped;
 
         if let Some(this_dest) = dest {
-            match find_origin_destination_path::<Int2D, i32>(
+            match find_origin_destination_path(
                 Int2D {
                     x: loc.x as i32,
                     y: loc.y as i32,
@@ -118,7 +118,7 @@ pub fn make_paths(
                     x: this_dest.x as i32,
                     y: this_dest.y as i32,
                 },
-                navigable_object_grid,
+                obj_grid,
             )
             .map(|node_vec| {
                 //println!("Located path for {}", i);
