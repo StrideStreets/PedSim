@@ -86,13 +86,13 @@ fn main() -> Result<(), image::ImageError> {
             }
         },
     };
-    let num_agents = 50;
+    let num_agents = 500;
 
     let state = ModelState::new(dim, num_agents, obj_grid);
     Visualization::default()
         .with_window_dimensions(1280., 720.)
         .with_simulation_dimensions(dim.0, dim.1)
-        .with_background_color(Color::BLUE)
+        .with_background_color(Color::BLACK)
         .with_name("Template")
         .start::<ModelVis, ModelState>(ModelVis, state);
 
